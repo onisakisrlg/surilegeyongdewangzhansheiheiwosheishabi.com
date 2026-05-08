@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Menu, 
@@ -31,7 +31,8 @@ import {
   Undo2,
   Lock,
   CornerDownLeft,
-  ArrowLeft
+  ArrowLeft,
+  Copy
 } from 'lucide-react';
 import { MOCK_PROJECTS } from './constants';
 import { PrototypeProject } from './types';
@@ -74,6 +75,35 @@ export default function App() {
   const [seaOption, setSeaOption] = useState<'return' | 'abandon'>('return');
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [showSeaModal, setShowSeaModal] = useState<boolean>(true);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // URL state management
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('project');
+    if (projectId && MOCK_PROJECTS.some(p => p.id === projectId)) {
+      setSelectedId(projectId);
+      setExpandedItems(prev => ({ ...prev, [projectId]: true }));
+    }
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (selectedId) {
+      url.searchParams.set('project', selectedId);
+    } else {
+      url.searchParams.delete('project');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, [selectedId]);
+
+  const handleShareClick = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setShowCopyToast(true);
+      setTimeout(() => setShowCopyToast(false), 2000);
+    });
+  };
 
   const selectedProject = MOCK_PROJECTS.find(p => p.id === selectedId);
 
@@ -149,9 +179,24 @@ export default function App() {
                   {expandedItems[project.id] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                 </div>
                 <div className="flex-1 text-left min-w-0">
-                  <span className={`block text-[10px] font-semibold tracking-wider uppercase ${selectedId === project.id ? 'text-gray-300' : 'text-gray-400 group-hover:text-black/60'}`}>
-                    ID: #{project.id}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`block text-[10px] font-semibold tracking-wider uppercase ${selectedId === project.id ? 'text-gray-300' : 'text-gray-400 group-hover:text-black/60'}`}>
+                      ID: #{project.id}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(project.id).then(() => {
+                          setCopiedId(project.id);
+                          setTimeout(() => setCopiedId(null), 2000);
+                        });
+                      }}
+                      className={`p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${selectedId === project.id ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'hover:bg-black/5 text-gray-400 hover:text-gray-700'}`}
+                      title="复制 ID"
+                    >
+                      {copiedId === project.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
                   <p className="font-bold text-sm truncate mt-0.5">{project.name}</p>
                 </div>
               </button>
@@ -274,9 +319,25 @@ export default function App() {
                 <ExternalLink className="w-3.5 h-3.5" />
                 查看redmine链接
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-black/90 transition-colors rounded-full text-xs font-semibold">
-                分享规范
+              <button 
+                onClick={handleShareClick}
+                className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-black/90 transition-colors rounded-full text-xs font-semibold relative"
+              >
+                分享
                 <ArrowRight className="w-3.5 h-3.5" />
+                <AnimatePresence>
+                  {showCopyToast && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black text-white text-[10px] px-3 py-1.5 rounded-lg shadow-xl font-normal"
+                    >
+                      链接已复制
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-solid border-4 border-transparent border-b-black"></div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </button>
             </div>
           </header>
@@ -443,7 +504,7 @@ export default function App() {
                   </div>
 
                   {/* Simulated bottom payment bar or notification */}
-                  {selectedId === '20260508' && selectedSubId === 'sub-3-1' && (
+                  {selectedId === '20260508' && (!selectedSubId || selectedSubId === 'sub-3-1') && (
                     <div className="p-4 bg-white border-t border-gray-100 flex-shrink-0 flex items-center justify-between z-20">
                       <div className="flex flex-col">
                         <div className="flex items-baseline gap-1">
@@ -478,7 +539,7 @@ export default function App() {
 
                   {/* Bottom Sheet Drawer for Sea Choice */}
                   <AnimatePresence>
-                    {showSeaModal && activeMethod === 'sea' && selectedId === '20260508' && selectedSubId === 'sub-3-1' && (
+                    {showSeaModal && activeMethod === 'sea' && selectedId === '20260508' && (!selectedSubId || selectedSubId === 'sub-3-1') && (
                       <div className="absolute inset-0 z-50 flex flex-col justify-end">
                         {/* Backdrop */}
                         <motion.div
