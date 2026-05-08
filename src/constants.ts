@@ -2,6 +2,22 @@ import { PrototypeProject } from "./types";
 
 export const MOCK_PROJECTS: PrototypeProject[] = [
   {
+    id: "20260507",
+    name: "入库页面按钮增加",
+    category: "仓库入库",
+    description: "待补充",
+    previewUrl: null,
+    subItems: [
+      { id: "sub-4-1", name: "原型展示" }
+    ],
+    specs: [
+      {
+        title: "设计说明",
+        content: "暂无，待后续补充。"
+      }
+    ]
+  },
+  {
     id: "20260508",
     name: "海运退运方案",
     category: "跨境物流",

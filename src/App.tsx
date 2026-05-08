@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Menu, 
@@ -67,6 +67,7 @@ export default function App() {
     '20260508': true
   });
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('mobile');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // 海运退运方案互动状态
   const [activeMethod, setActiveMethod] = useState<string>('sea');
@@ -75,6 +76,21 @@ export default function App() {
   const [showSeaModal, setShowSeaModal] = useState<boolean>(true);
 
   const selectedProject = MOCK_PROJECTS.find(p => p.id === selectedId);
+
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) return MOCK_PROJECTS;
+    const lowerQuery = searchQuery.toLowerCase().trim().replace(/^#+/, '');
+    
+    return MOCK_PROJECTS.filter(project => {
+      return (
+        project.id.toLowerCase().includes(lowerQuery) ||
+        project.name.toLowerCase().includes(lowerQuery) ||
+        project.category.toLowerCase().includes(lowerQuery) ||
+        project.description.toLowerCase().includes(lowerQuery) ||
+        (project.subItems && project.subItems.some(sub => sub.name.toLowerCase().includes(lowerQuery)))
+      );
+    });
+  }, [searchQuery]);
 
   const toggleExpand = (id: string) => {
     setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
@@ -99,6 +115,8 @@ export default function App() {
             <input 
               type="text" 
               placeholder="搜索项目..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#f1f3f5] rounded-full py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
             />
           </div>
@@ -108,10 +126,15 @@ export default function App() {
           <div className="px-3 mb-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
             项目列表
           </div>
-          {MOCK_PROJECTS.map((project) => (
-            <div key={project.id} className="space-y-1">
-              <button
-                onClick={() => {
+          {filteredProjects.length === 0 ? (
+            <div className="px-3 py-6 text-center text-xs text-gray-400">
+              未找到匹配的项目
+            </div>
+          ) : (
+            filteredProjects.map((project) => (
+              <div key={project.id} className="space-y-1">
+                <button
+                  onClick={() => {
                   setSelectedId(project.id);
                   setSelectedSubId(null);
                   toggleExpand(project.id);
@@ -161,7 +184,7 @@ export default function App() {
                 )}
               </AnimatePresence>
             </div>
-          ))}
+          )))}
         </nav>
 
 
@@ -249,7 +272,7 @@ export default function App() {
             <div className="flex items-center gap-3">
               <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors rounded-full text-xs font-semibold">
                 <ExternalLink className="w-3.5 h-3.5" />
-                在线原型
+                查看redmine链接
               </button>
               <button className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-black/90 transition-colors rounded-full text-xs font-semibold">
                 分享规范
