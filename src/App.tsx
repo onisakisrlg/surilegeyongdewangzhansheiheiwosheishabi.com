@@ -74,9 +74,19 @@ export default function App() {
   const [activeMethod, setActiveMethod] = useState<string>('sea');
   const [seaOption, setSeaOption] = useState<'return' | 'abandon'>('return');
   const [isPaid, setIsPaid] = useState<boolean>(false);
-  const [showSeaModal, setShowSeaModal] = useState<boolean>(true);
+  const [showSeaModal, setShowSeaModal] = useState<boolean>(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedId === '20260508') {
+      if (selectedSubId === 'sub-3-1') {
+        setShowSeaModal(true);
+      } else {
+        setShowSeaModal(false);
+      }
+    }
+  }, [selectedId, selectedSubId]);
 
   // URL state management
   useEffect(() => {
