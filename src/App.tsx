@@ -139,9 +139,20 @@ export default function App() {
   const currentStatus = selectedId ? "已选择项目" : "等待选择";
 
   return (
-    <div className="flex h-screen w-full bg-[#f8f9fa] text-[#1a1a1b] font-sans overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-72 flex-shrink-0 bg-white border-r border-[#e9ecef] flex flex-col h-full z-30">
+    <>
+      <div className="md:hidden fixed inset-0 z-[100] bg-[#f8f9fa] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mb-6 text-gray-400">
+          <Smartphone className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">请使用大屏设备</h2>
+        <p className="text-gray-500 text-sm leading-relaxed max-w-[280px]">
+          本原型专门为电脑或平板端设计，手机端无法完整展示交互流程，请去电脑或者平板访问。
+        </p>
+      </div>
+
+      <div className="hidden md:flex h-screen w-full bg-[#f8f9fa] text-[#1a1a1b] font-sans overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-72 flex-shrink-0 bg-white border-r border-[#e9ecef] flex flex-col h-full z-30">
         <div className="p-6 border-bottom border-[#f1f3f5]">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
@@ -325,10 +336,26 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors rounded-full text-xs font-semibold">
-                <ExternalLink className="w-3.5 h-3.5" />
-                查看redmine链接
-              </button>
+              {selectedProject?.redmineUrl ? (
+                <a 
+                  href={selectedProject.redmineUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors rounded-full text-xs font-semibold"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  查看redmine链接
+                </a>
+              ) : (
+                <button 
+                  disabled
+                  title="暂无Redmine链接"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-400 cursor-not-allowed rounded-full text-xs font-semibold"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 opacity-50" />
+                  无可查看链接
+                </button>
+              )}
               <button 
                 onClick={handleShareClick}
                 className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-black/90 transition-colors rounded-full text-xs font-semibold relative"
@@ -666,5 +693,6 @@ export default function App() {
         </section>
       </main>
     </div>
+    </>
   );
 }

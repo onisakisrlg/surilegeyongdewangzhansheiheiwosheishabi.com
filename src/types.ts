@@ -10,6 +10,7 @@ export interface PrototypeProject {
   description: string;
   specs: SpecSection[];
   previewUrl: string | null;
+  redmineUrl?: string;
   subItems?: { id: string; name: string }[];
 }
 

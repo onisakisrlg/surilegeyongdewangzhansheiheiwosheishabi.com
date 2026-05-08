@@ -23,6 +23,7 @@ export const MOCK_PROJECTS: PrototypeProject[] = [
     category: "跨境物流",
     description: "针对日本邮局海运包裹派送失败退回的潜在高额追加运费痛点，设计的退运运费预扣费选项原型。",
     previewUrl: null,
+    redmineUrl: "https://redmine.rakutao.vip/issues/14325",
     subItems: [
       { id: "sub-3-1", name: "运单选择主页面" }
     ],
