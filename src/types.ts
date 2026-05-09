@@ -1,6 +1,8 @@
+import { ReactNode } from "react";
+
 export interface SpecSection {
   title: string;
-  content: string;
+  content: string | ReactNode;
 }
 
 export interface PrototypeProject {

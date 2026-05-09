@@ -53,7 +53,7 @@ const getPriceDetails = (methodId: string, option: 'return' | 'abandon') => {
   const method = LOGISTICS_METHODS.find(m => m.id === methodId) || LOGISTICS_METHODS[0];
   const base = method.price;
   const boxFee = method.boxFee;
-  const extra = (methodId === 'sea' && option === 'return') ? method.price : 0;
+  const extra = (['sea', 'air'].includes(methodId) && option === 'return') ? method.price : 0;
   const discount = 490;
   const total = base + boxFee + extra - discount;
   const rmb = (total * 0.0454).toFixed(2);
@@ -70,20 +70,20 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('mobile');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // 海运退运方案互动状态
+  // 海运/空运退运方案互动状态
   const [activeMethod, setActiveMethod] = useState<string>('sea');
-  const [seaOption, setSeaOption] = useState<'return' | 'abandon'>('return');
+  const [returnOption, setReturnOption] = useState<'return' | 'abandon'>('return');
   const [isPaid, setIsPaid] = useState<boolean>(false);
-  const [showSeaModal, setShowSeaModal] = useState<boolean>(false);
+  const [showReturnModal, setShowReturnModal] = useState<boolean>(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedId === '20260508') {
       if (selectedSubId === 'sub-3-1') {
-        setShowSeaModal(true);
+        setShowReturnModal(true);
       } else {
-        setShowSeaModal(false);
+        setShowReturnModal(false);
       }
     }
   }, [selectedId, selectedSubId]);
@@ -462,8 +462,8 @@ export default function App() {
                                     <button
                                       onClick={() => {
                                         setActiveMethod(method.id);
-                                        if (method.id === 'sea') {
-                                          setShowSeaModal(true);
+                                        if (['sea', 'air'].includes(method.id)) {
+                                          setShowReturnModal(true);
                                         }
                                       }}
                                       className="w-full flex items-center justify-between text-left group"
@@ -494,15 +494,15 @@ export default function App() {
                                       </div>
                                     </button>
 
-                                    {/* Embedded Visual Feedback for Special Regulation Sea Options */}
-                                    {method.id === 'sea' && isSelected && (
+                                    {/* Embedded Visual Feedback for Special Regulation Sea/Air Options */}
+                                    {['sea', 'air'].includes(method.id) && isSelected && (
                                       <div className="flex flex-col mt-2 pl-7">
                                         <button
-                                          onClick={() => setShowSeaModal(true)}
+                                          onClick={() => setShowReturnModal(true)}
                                           className="self-start py-1.5 px-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[10px] text-amber-800 font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
                                         >
                                           <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
-                                          已配策略: {seaOption === 'return' ? '📦 【原路寄回】 (+' + LOGISTICS_METHODS.find(m => m.id === 'sea')?.price + '円)' : '🗑 【放弃包裹】 (0円)'} (点击修改)
+                                          已配策略: {returnOption === 'return' ? '📦 【原路寄回】 (+' + LOGISTICS_METHODS.find(m => m.id === method.id)?.price + '円)' : '🗑 【放弃包裹】 (0円)'} (点击修改)
                                         </button>
                                       </div>
                                     )}
@@ -547,11 +547,11 @@ export default function App() {
                         <div className="flex items-baseline gap-1">
                           <span className="text-[10px] font-medium text-gray-500">合计:</span>
                           <span className="text-sm font-extrabold text-red-500">
-                            {getPriceDetails(activeMethod, seaOption).total + 490}円 <span className="text-[9px] font-normal text-gray-400">-490円</span>
+                            {getPriceDetails(activeMethod, returnOption).total + 490}円 <span className="text-[9px] font-normal text-gray-400">-490円</span>
                           </span>
                         </div>
                         <span className="text-[9.5px] text-gray-400">
-                          约 {getPriceDetails(activeMethod, seaOption).rmb} 人民币
+                          约 {getPriceDetails(activeMethod, returnOption).rmb} 人民币
                         </span>
                       </div>
 
@@ -574,16 +574,16 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Bottom Sheet Drawer for Sea Choice */}
+                  {/* Bottom Sheet Drawer for Sea/Air Choice */}
                   <AnimatePresence>
-                    {showSeaModal && activeMethod === 'sea' && selectedId === '20260508' && (!selectedSubId || selectedSubId === 'sub-3-1') && (
+                    {showReturnModal && ['sea', 'air'].includes(activeMethod) && selectedId === '20260508' && (!selectedSubId || selectedSubId === 'sub-3-1') && (
                       <div className="absolute inset-0 z-50 flex flex-col justify-end">
                         {/* Backdrop */}
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 0.5 }}
                           exit={{ opacity: 0 }}
-                          onClick={() => setShowSeaModal(false)}
+                          onClick={() => setShowReturnModal(false)}
                           className="absolute inset-0 bg-black/60 cursor-pointer"
                         />
                         {/* Drawer Panel */}
@@ -600,10 +600,10 @@ export default function App() {
                             <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <h4 className="font-extrabold text-[12px] text-gray-900 leading-snug">日本邮局海运退回额外费用</h4>
+                                <h4 className="font-extrabold text-[12px] text-gray-900 leading-snug">日本邮局{activeMethod === 'sea' ? '海运' : '空运'}退回额外费用</h4>
                               </div>
                               <p className="text-[10px] text-gray-500 mt-1.5 leading-relaxed">
-                                根据日本邮局规定，针对海运退回有额外费用。为避免包裹出现派送异常产生亏损，请您提前选择包裹无法派送时的处理方案：
+                                根据日本邮局规定，针对{activeMethod === 'sea' ? '海运' : '空运'}退回有额外费用。为避免包裹出现派送异常产生亏损，请您提前选择包裹无法派送时的处理方案：
                               </p>
                             </div>
                           </div>
@@ -611,23 +611,23 @@ export default function App() {
                           <div className="space-y-2.5">
                             {/* Option A */}
                             <button
-                              onClick={() => setSeaOption('return')}
+                              onClick={() => setReturnOption('return')}
                               className={`w-full text-left p-3.5 rounded-xl border transition-all ${
-                                seaOption === 'return' ? 'bg-amber-50/50 border-amber-400 shadow-sm' : 'bg-gray-50/50 border-gray-100 hover:bg-gray-50'
+                                returnOption === 'return' ? 'bg-amber-50/50 border-amber-400 shadow-sm' : 'bg-gray-50/50 border-gray-100 hover:bg-gray-50'
                               }`}
                             >
                               <div className="flex items-start gap-2.5">
                                 <input 
                                   type="radio" 
-                                  name="sea_option_drawer"
-                                  checked={seaOption === 'return'}
-                                  onChange={() => setSeaOption('return')}
+                                  name="return_option_drawer"
+                                  checked={returnOption === 'return'}
+                                  onChange={() => setReturnOption('return')}
                                   className="mt-0.5 accent-amber-600"
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-center">
                                     <span className="font-extrabold text-xs text-gray-800">📦 【原路寄回】</span>
-                                    <span className="text-[10px] font-bold text-red-500">+{LOGISTICS_METHODS.find(m => m.id === 'sea')?.price}円 退运运费</span>
+                                    <span className="text-[10px] font-bold text-red-500">+{LOGISTICS_METHODS.find(m => m.id === activeMethod)?.price}円 退运运费</span>
                                   </div>
                                   <p className="text-[9px] text-gray-400 mt-1.5 leading-relaxed">
                                     当包裹因收件人联系不上或未申报等任何导致包裹无法进行配送而需要退回时，需要额外支付一份退运运费。若包裹正常配送，则不产生退运运费，用户可在配送成功提供相关凭证联系客服申请全额退回退运运费。
@@ -638,17 +638,17 @@ export default function App() {
 
                             {/* Option B */}
                             <button
-                              onClick={() => setSeaOption('abandon')}
+                              onClick={() => setReturnOption('abandon')}
                               className={`w-full text-left p-3.5 rounded-xl border transition-all ${
-                                seaOption === 'abandon' ? 'bg-amber-50/50 border-amber-400 shadow-sm' : 'bg-gray-50/50 border-gray-100 hover:bg-gray-50'
+                                returnOption === 'abandon' ? 'bg-amber-50/50 border-amber-400 shadow-sm' : 'bg-gray-50/50 border-gray-100 hover:bg-gray-50'
                               }`}
                             >
                               <div className="flex items-start gap-2.5">
                                 <input 
                                   type="radio" 
-                                  name="sea_option_drawer"
-                                  checked={seaOption === 'abandon'}
-                                  onChange={() => setSeaOption('abandon')}
+                                  name="return_option_drawer"
+                                  checked={returnOption === 'abandon'}
+                                  onChange={() => setReturnOption('abandon')}
                                   className="mt-0.5 accent-amber-600"
                                 />
                                 <div className="flex-1 min-w-0">
@@ -665,7 +665,7 @@ export default function App() {
                           </div>
 
                           <button
-                            onClick={() => setShowSeaModal(false)}
+                            onClick={() => setShowReturnModal(false)}
                             className="mt-2 w-full py-3 bg-black text-white hover:bg-black/90 active:scale-95 transition-all rounded-xl font-bold text-xs shadow-lg"
                           >
                             确定并应用此未妥投方案
