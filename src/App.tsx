@@ -72,7 +72,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('mobile');
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('desktop');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // 海运/空运退运方案互动状态
