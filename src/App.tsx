@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Menu, 
   ChevronRight, 
+  ChevronLeft,
   ChevronDown, 
   Layout, 
   Code2, 
@@ -74,6 +75,8 @@ export default function App() {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('desktop');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSpecsCollapsed, setIsSpecsCollapsed] = useState(false);
 
   // 海运/空运退运方案互动状态
   const [activeMethod, setActiveMethod] = useState<string>('sea');
@@ -171,115 +174,134 @@ export default function App() {
 
       <div className="hidden md:flex h-screen w-full bg-[#f8f9fa] text-[#1a1a1b] font-sans overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-72 flex-shrink-0 bg-white border-r border-[#e9ecef] flex flex-col h-full z-30">
-        <div className="p-6 border-bottom border-[#f1f3f5]">
-          <div 
-            className="flex items-center gap-2 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => {
-              setSelectedId(null);
-              setSelectedSubId(null);
-            }}
+        <aside className={`${isSidebarCollapsed ? 'w-12' : 'w-72'} transition-all duration-300 flex-shrink-0 bg-white border-r border-[#e9ecef] flex flex-col h-full z-30 relative group`}>
+          {/* Toggle Button */}
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="absolute -right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm z-40 hover:bg-black hover:text-white transition-all transition-colors"
           >
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <Box className="text-white w-5 h-5" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">原型中心</span>
-          </div>
-          
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-black transition-colors" />
-            <input 
-              type="text" 
-              placeholder="搜索项目..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#f1f3f5] rounded-full py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
-            />
-          </div>
-        </div>
+            {isSidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </button>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <div className="px-3 mb-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-            项目列表
-          </div>
-          {filteredProjects.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs text-gray-400">
-              未找到匹配的项目
-            </div>
-          ) : (
-            filteredProjects.map((project) => (
-              <div key={project.id} className="space-y-1">
-                <div
+          {!isSidebarCollapsed ? (
+            <>
+              <div className="p-6 border-bottom border-[#f1f3f5]">
+                <div 
+                  className="flex items-center gap-2 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => {
-                  setSelectedId(project.id);
-                  setSelectedSubId(null);
-                  toggleExpand(project.id);
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all group border cursor-pointer ${
-                  selectedId === project.id 
-                    ? 'bg-black text-white font-medium border-black shadow-md' 
-                    : 'text-gray-600 hover:bg-gray-100 border-transparent'
-                }`}
-              >
-                <div className={`p-1 rounded-md ${selectedId === project.id ? 'bg-white/10' : 'bg-gray-100'}`}>
-                  {expandedItems[project.id] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`block text-[10px] font-semibold tracking-wider uppercase ${selectedId === project.id ? 'text-gray-300' : 'text-gray-400 group-hover:text-black/60'}`}>
-                      ID: #{project.id}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(project.id).then(() => {
-                          setCopiedId(project.id);
-                          setTimeout(() => setCopiedId(null), 2000);
-                        });
-                      }}
-                      className={`p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${selectedId === project.id ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'hover:bg-black/5 text-gray-400 hover:text-gray-700'}`}
-                      title="复制 ID"
-                    >
-                      {copiedId === project.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    </button>
+                    setSelectedId(null);
+                    setSelectedSubId(null);
+                  }}
+                >
+                  <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                    <Box className="text-white w-5 h-5" />
                   </div>
-                  <p className="font-bold text-sm truncate mt-0.5">{project.name}</p>
+                  <span className="font-bold text-lg tracking-tight">原型中心</span>
+                </div>
+                
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-black transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="搜索项目..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-[#f1f3f5] rounded-full py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
+                  />
                 </div>
               </div>
 
-              <AnimatePresence>
-                {expandedItems[project.id] && project.subItems && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="ml-4 pl-4 border-l border-gray-100 space-y-1 overflow-hidden"
-                  >
-                    {project.subItems.map(subItem => (
-                      <button
-                        key={subItem.id}
+              <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+                <div className="px-3 mb-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                  项目列表
+                </div>
+                {filteredProjects.length === 0 ? (
+                  <div className="px-3 py-6 text-center text-xs text-gray-400">
+                    未找到匹配的项目
+                  </div>
+                ) : (
+                  filteredProjects.map((project) => (
+                    <div key={project.id} className="space-y-1">
+                      <div
                         onClick={() => {
-                          setSelectedId(project.id);
-                          setSelectedSubId(subItem.id);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
-                          selectedSubId === subItem.id 
-                            ? 'text-black font-semibold bg-gray-100' 
-                            : 'text-gray-500 hover:text-black'
-                        }`}
-                      >
-                        {subItem.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                        setSelectedId(project.id);
+                        setSelectedSubId(null);
+                        toggleExpand(project.id);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all group border cursor-pointer ${
+                        selectedId === project.id 
+                          ? 'bg-black text-white font-medium border-black shadow-md' 
+                          : 'text-gray-600 hover:bg-gray-100 border-transparent'
+                      }`}
+                    >
+                      <div className={`p-1 rounded-md ${selectedId === project.id ? 'bg-white/10' : 'bg-gray-100'}`}>
+                        {expandedItems[project.id] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`block text-[10px] font-semibold tracking-wider uppercase ${selectedId === project.id ? 'text-gray-300' : 'text-gray-400 group-hover:text-black/60'}`}>
+                            ID: #{project.id}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(project.id).then(() => {
+                                setCopiedId(project.id);
+                                setTimeout(() => setCopiedId(null), 2000);
+                              });
+                            }}
+                            className={`p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${selectedId === project.id ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'hover:bg-black/5 text-gray-400 hover:text-gray-700'}`}
+                            title="复制 ID"
+                          >
+                            {copiedId === project.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        </div>
+                        <p className="font-bold text-sm truncate mt-0.5">{project.name}</p>
+                      </div>
+                    </div>
+
+                    <AnimatePresence>
+                      {expandedItems[project.id] && project.subItems && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="ml-4 pl-4 border-l border-gray-100 space-y-1 overflow-hidden"
+                        >
+                          {project.subItems.map(subItem => (
+                            <button
+                              key={subItem.id}
+                              onClick={() => {
+                                setSelectedId(project.id);
+                                setSelectedSubId(subItem.id);
+                              }}
+                              className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
+                                selectedSubId === subItem.id 
+                                  ? 'text-black font-semibold bg-gray-100' 
+                                  : 'text-gray-500 hover:text-black'
+                              }`}
+                            >
+                              {subItem.name}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )))}
+              </nav>
+            </>
+          ) : (
+            <div className="flex flex-col items-center py-10 gap-8">
+              <Box className="w-6 h-6 text-black" />
+              <div className="flex flex-col gap-4 items-center">
+                <div className="w-6 h-px bg-gray-200" />
+                <Layout className="w-4 h-4 text-gray-300" />
+                <div className="w-6 h-px bg-gray-200" />
+              </div>
             </div>
-          )))}
-        </nav>
-
-
-      </aside>
+          )}
+        </aside>
 
       {/* Main Content Area */}
       <main className="flex-1 flex overflow-hidden bg-white">
@@ -289,41 +311,62 @@ export default function App() {
           {selectedProject && (
             <motion.div
               initial={{ width: 0, opacity: 0, x: -20 }}
-              animate={{ width: 420, opacity: 1, x: 0 }}
+              animate={{ 
+                width: isSpecsCollapsed ? 48 : 420, 
+                opacity: 1, 
+                x: 0 
+              }}
               exit={{ width: 0, opacity: 0, x: -20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="border-r border-[#e9ecef] flex flex-col h-full bg-[#fdfdfd] overflow-hidden"
+              className="border-r border-[#e9ecef] flex flex-col h-full bg-[#fdfdfd] overflow-hidden relative group/spec"
             >
-              <div className="p-8 h-full overflow-y-auto">
-                <div className="mb-8">
-                  <div className="flex items-center gap-2 text-indigo-600 mb-2 font-medium text-xs tracking-wider uppercase">
-                    <BookOpen className="w-4 h-4" />
-                    <span>核心设计要点</span>
+              {/* Toggle Button for Specs */}
+              <button 
+                onClick={() => setIsSpecsCollapsed(!isSpecsCollapsed)}
+                className="absolute right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm z-40 hover:bg-black hover:text-white transition-all transition-colors"
+              >
+                {isSpecsCollapsed ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              </button>
+
+              {!isSpecsCollapsed ? (
+                <div className="p-8 h-full overflow-y-auto custom-scrollbar">
+                  <div className="mb-8">
+                    <div className="flex items-center gap-2 text-indigo-600 mb-2 font-medium text-xs tracking-wider uppercase">
+                      <BookOpen className="w-4 h-4" />
+                      <span>核心设计要点</span>
+                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight mb-3">{selectedProject.name}</h1>
+                    <p className="text-gray-500 leading-relaxed text-sm">
+                      {selectedProject.description}
+                    </p>
                   </div>
-                  <h1 className="text-3xl font-bold tracking-tight mb-3">{selectedProject.name}</h1>
-                  <p className="text-gray-500 leading-relaxed">
-                    {selectedProject.description}
-                  </p>
+
+                  <div className="space-y-10">
+                    {selectedProject.specs.map((spec, i) => (
+                      <section key={i} className="group">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="h-6 w-1 bg-black rounded-full transition-all group-hover:h-8" />
+                          <h3 className="font-bold text-sm uppercase tracking-widest text-[#1a1a1b]">
+                            {spec.title}
+                          </h3>
+                        </div>
+                        <div className="pl-4 prose prose-sm text-gray-600 whitespace-pre-wrap leading-relaxed border-l border-gray-100 text-xs">
+                          {spec.content}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
                 </div>
-
-                <div className="space-y-10">
-                  {selectedProject.specs.map((spec, i) => (
-                    <section key={i} className="group">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-6 w-1 bg-black rounded-full transition-all group-hover:h-8" />
-                        <h3 className="font-bold text-sm uppercase tracking-widest text-[#1a1a1b]">
-                          {spec.title}
-                        </h3>
-                      </div>
-                      <div className="pl-4 prose prose-sm text-gray-600 whitespace-pre-wrap leading-relaxed border-l border-gray-100">
-                        {spec.content}
-                      </div>
-                    </section>
-                  ))}
+              ) : (
+                <div className="flex flex-col items-center py-10 gap-8">
+                  <FileText className="w-5 h-5 text-gray-300" />
+                  <div className="flex flex-col gap-4 items-center">
+                    <div className="w-6 h-px bg-gray-200" />
+                    <BookOpen className="w-4 h-4 text-gray-300" />
+                    <div className="w-6 h-px bg-gray-200" />
+                  </div>
                 </div>
-
-
-              </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -794,7 +837,7 @@ export default function App() {
                                     <h3 className="text-sm font-bold text-gray-800">包裹其他相关</h3>
                                     <HelpCircle className="w-3.5 h-3.5 text-gray-300" />
                                   </div>
-                                  <div className="p-4 grid grid-cols-2 gap-3">
+                                  <div className="p-4 flex flex-col gap-4">
                                     {[
                                       { id: 'takeout', label: '取出', img: 'https://images.unsplash.com/photo-1586528116311-ad86d738111e?w=800' },
                                       { id: 'split', label: '拆分', img: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=800' },
@@ -803,17 +846,34 @@ export default function App() {
                                     ].map((opt) => {
                                       const hasPhoto = uploadedPhotos[opt.id];
                                       return (
-                                        <button
-                                          key={opt.id}
-                                          onClick={() => { if (hasPhoto) setViewingPhotoUrl(opt.img); }}
-                                          className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl text-[11px] font-black transition-all shadow-sm active:scale-95 border ${
-                                            hasPhoto 
-                                              ? 'bg-red-500 border-red-600 text-white shadow-red-200 animate-pulse-slow' 
-                                              : 'bg-emerald-500 border-emerald-600 text-white shadow-emerald-100'
-                                          }`}
-                                        >
-                                          {hasPhoto ? '有' : '无'}{opt.label}
-                                        </button>
+                                        <div key={opt.id} className="space-y-2">
+                                          <button
+                                            onClick={() => { if (hasPhoto) setViewingPhotoUrl(opt.img); }}
+                                            className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl text-[11px] font-black transition-all shadow-sm active:scale-95 border ${
+                                              hasPhoto 
+                                                ? 'bg-red-500 border-red-600 text-white shadow-red-200 animate-pulse-slow' 
+                                                : 'bg-emerald-500 border-emerald-600 text-white shadow-emerald-100'
+                                            }`}
+                                          >
+                                            {hasPhoto ? '有' : '无'}{opt.label}
+                                          </button>
+                                          {hasPhoto && (
+                                            <div 
+                                              className="rounded-xl overflow-hidden border border-red-100 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300 cursor-pointer"
+                                              onClick={() => setViewingPhotoUrl(opt.img)}
+                                            >
+                                              <img 
+                                                src={opt.img} 
+                                                className="w-full h-auto object-cover max-h-48"
+                                                alt={`${opt.label}存证图`}
+                                              />
+                                              <div className="bg-red-50 py-1.5 px-3 flex items-center justify-between">
+                                                <span className="text-[10px] text-red-600 font-bold">{opt.label}情况存证照片</span>
+                                                <ChevronRight className="w-3 h-3 text-red-300" />
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
                                       );
                                     })}
                                   </div>

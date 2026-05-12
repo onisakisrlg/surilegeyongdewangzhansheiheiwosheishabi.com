@@ -58,6 +58,7 @@ export const MOCK_PROJECTS: PrototypeProject[] = [
     category: "仓库打包",
     description: "展示打包过程中出现的异常图片及处理流程。",
     previewUrl: null,
+    redmineUrl: "https://redmine.rakutao.vip/issues/14370",
     subItems: [
       { id: "sub-11-1", name: "管理端后台预览" },
       { id: "sub-11-2", name: "APP用户前端预览" }
