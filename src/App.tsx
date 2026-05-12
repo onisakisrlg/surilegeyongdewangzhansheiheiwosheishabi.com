@@ -32,7 +32,15 @@ import {
   Lock,
   CornerDownLeft,
   ArrowLeft,
-  Copy
+  Copy,
+  Camera,
+  Upload,
+  Image as ImageIcon,
+  FileText,
+  Layers,
+  Plus,
+  X,
+  Headset
 } from 'lucide-react';
 import { MOCK_PROJECTS } from './constants';
 import { PrototypeProject } from './types';
@@ -61,12 +69,9 @@ const getPriceDetails = (methodId: string, option: 'return' | 'abandon') => {
 };
 
 export default function App() {
-  const [selectedId, setSelectedId] = useState<string | null>('20260508');
-  const [selectedSubId, setSelectedSubId] = useState<string | null>('sub-3-1');
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    'proj-001': false,
-    '20260508': true
-  });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('mobile');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -77,6 +82,20 @@ export default function App() {
   const [showReturnModal, setShowReturnModal] = useState<boolean>(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [viewingPhotoUrl, setViewingPhotoUrl] = useState<string | null>(null);
+
+  // 打包异常图片 state
+  const [uploadedPhotos, setUploadedPhotos] = useState<Record<string, boolean>>({});
+  const [activeAnomalyMenu, setActiveAnomalyMenu] = useState<string | null>(null);
+
+  const togglePhoto = (id: string, force?: boolean) => {
+    setUploadedPhotos(prev => ({
+      ...prev,
+      [id]: force !== undefined ? force : !prev[id]
+    }));
+    // If we are deleting, or if we just uploaded, clear the menu
+    setActiveAnomalyMenu(null);
+  };
 
   useEffect(() => {
     if (selectedId === '20260508') {
@@ -154,7 +173,13 @@ export default function App() {
         {/* Sidebar */}
         <aside className="w-72 flex-shrink-0 bg-white border-r border-[#e9ecef] flex flex-col h-full z-30">
         <div className="p-6 border-bottom border-[#f1f3f5]">
-          <div className="flex items-center gap-2 mb-6">
+          <div 
+            className="flex items-center gap-2 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => {
+              setSelectedId(null);
+              setSelectedSubId(null);
+            }}
+          >
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
               <Box className="text-white w-5 h-5" />
             </div>
@@ -184,13 +209,13 @@ export default function App() {
           ) : (
             filteredProjects.map((project) => (
               <div key={project.id} className="space-y-1">
-                <button
+                <div
                   onClick={() => {
                   setSelectedId(project.id);
                   setSelectedSubId(null);
                   toggleExpand(project.id);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all group border ${
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all group border cursor-pointer ${
                   selectedId === project.id 
                     ? 'bg-black text-white font-medium border-black shadow-md' 
                     : 'text-gray-600 hover:bg-gray-100 border-transparent'
@@ -220,7 +245,7 @@ export default function App() {
                   </div>
                   <p className="font-bold text-sm truncate mt-0.5">{project.name}</p>
                 </div>
-              </button>
+              </div>
 
               <AnimatePresence>
                 {expandedItems[project.id] && project.subItems && (
@@ -522,7 +547,303 @@ export default function App() {
                             </p>
                           </div>
                         </div>
-                    ) : (
+                      ) : selectedId === '20260511' ? (
+                        <div className="h-full flex flex-col md:flex-row bg-[#f0f2f5] gap-px overflow-hidden">
+                          {/* Left Column: Management Backend View - Admin */}
+                          <div className="flex-1 overflow-y-auto bg-white p-4 md:p-8 space-y-6">
+                            {/* Header Section */}
+                            <div className="bg-white pb-4 flex items-center justify-between border-b border-gray-200">
+                              <h2 className="text-base font-bold text-gray-800">管理端后台预览</h2>
+                              <div className="flex gap-2">
+                                <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded border border-blue-100 uppercase">Admin Role</span>
+                                <span className="bg-gray-50 text-gray-400 text-[10px] font-bold px-2 py-1 rounded border border-gray-100">Live Editing</span>
+                              </div>
+                            </div>
+
+                            {/* Surcharge Table */}
+                            <div className="bg-white border-x border-t border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                              <table className="w-full text-center text-xs">
+                                <thead className="bg-[#f5f7fa]">
+                                  <tr className="border-b border-gray-200">
+                                    <th className="py-3 font-bold text-gray-600 w-1/4 border-r border-gray-200 uppercase tracking-wider">附加项名称</th>
+                                    <th className="py-3 font-bold text-gray-600 w-1/4 border-r border-gray-200 uppercase tracking-wider">数量</th>
+                                    <th className="py-3 font-bold text-gray-600 w-1/4 border-r border-gray-200 uppercase tracking-wider">单位</th>
+                                    <th className="py-3 font-bold text-gray-600 w-1/4 uppercase tracking-wider">附加项金额</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr className="border-b border-gray-200 h-16">
+                                    <td colSpan={4} className="text-gray-400 font-medium italic">空数据占位符</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Form Section */}
+                            <div className="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden shadow-sm">
+                              <div className="p-4 grid grid-cols-12 gap-4 items-center">
+                                <div className="col-span-3 text-xs font-black text-gray-600 bg-gray-50 py-3 border border-gray-200 rounded-lg text-center">
+                                  用户申请备注
+                                </div>
+                                <div className="col-span-9">
+                                  <input 
+                                    type="text" 
+                                    disabled
+                                    placeholder="请不要拆商品原包装，快递包装随意哦" 
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-xs focus:outline-none bg-gray-50 font-medium italic"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Packing Images Section */}
+                            <div className="bg-[#f5f7fa] p-6 border border-gray-200 rounded-xl space-y-8 shadow-inner">
+                              <div className="space-y-4">
+                                <div className="text-xs font-bold text-gray-700 flex items-center gap-2">
+                                  <ImageIcon className="w-4 h-4 text-gray-400" />
+                                  标准打包图 (必填):
+                                </div>
+                                <div className="flex flex-wrap gap-4">
+                                  <div 
+                                    onClick={() => togglePhoto('standard-1')}
+                                    className="w-24 h-24 bg-white border border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group overflow-hidden shadow-sm"
+                                  >
+                                    {uploadedPhotos['standard-1'] ? (
+                                      <div className="relative w-full h-full">
+                                        <img src="https://images.unsplash.com/photo-1566576721346-d4a3b4eaad21?w=200" className="w-full h-full object-cover" />
+                                        <div 
+                                          onClick={(e) => { e.stopPropagation(); togglePhoto('standard-1'); }}
+                                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <Camera className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
+                                        <span className="text-[9px] text-gray-400 font-medium text-center px-2">点击拍照/上传图片</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <div className="w-24 h-24 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all">
+                                    <Plus className="w-5 h-5" />
+                                    <span className="text-[9px]">添加更多</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-4 pt-4 border-t border-gray-200/60">
+                                <div className="text-xs font-bold text-red-600 flex items-center gap-2">
+                                  <AlertCircle className="w-4 h-4" />
+                                  异常处理附件 (如遇异常按需拍照):
+                                </div>
+                                <div className="flex flex-wrap gap-4 items-start">
+                                  {[
+                                    { id: 'takeout', label: '取出', img: 'https://images.unsplash.com/photo-1586528116311-ad86d738111e?w=400' },
+                                    { id: 'split', label: '拆分', img: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=400' },
+                                    { id: 'discard', label: '丢弃', img: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400' },
+                                    { id: 'damage', label: '破损', img: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400' }
+                                  ].map((opt) => {
+                                    const hasPhoto = uploadedPhotos[opt.id];
+                                    const isMenuOpen = activeAnomalyMenu === opt.id;
+                                    
+                                    return (
+                                      <div key={opt.id} className="flex flex-col gap-3 relative">
+                                        {isMenuOpen && !hasPhoto ? (
+                                          <div className="flex flex-col gap-2 p-2 bg-white border border-red-500 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-200 z-10">
+                                            <button 
+                                              onClick={() => togglePhoto(opt.id, true)}
+                                              className="px-4 py-2 bg-black text-white text-[10px] font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-black/90 active:scale-95 transition-all"
+                                            >
+                                              <Camera className="w-3.5 h-3.5" />
+                                              拍照
+                                            </button>
+                                            <button 
+                                              onClick={() => togglePhoto(opt.id, true)}
+                                              className="px-4 py-2 bg-gray-100 text-gray-900 text-[10px] font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-gray-200 active:scale-95 transition-all"
+                                            >
+                                              <Upload className="w-3.5 h-3.5" />
+                                              上传
+                                            </button>
+                                            <button 
+                                              onClick={() => setActiveAnomalyMenu(null)}
+                                              className="mt-1 text-[9px] text-gray-400 hover:text-gray-600 font-bold"
+                                            >
+                                              取消
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <button 
+                                            onClick={() => {
+                                              if (!hasPhoto) {
+                                                setActiveAnomalyMenu(opt.id);
+                                              }
+                                            }}
+                                            disabled={hasPhoto}
+                                            className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all border flex items-center gap-2 shadow-sm ${
+                                              hasPhoto 
+                                                ? 'bg-emerald-500 border-emerald-600 text-white shadow-emerald-200 ring-2 ring-emerald-100' 
+                                                : 'bg-white border-gray-200 text-gray-700 hover:border-red-500 hover:text-red-600 hover:shadow-md'
+                                            } disabled:cursor-default`}
+                                          >
+                                            {hasPhoto ? <Check className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+                                            {opt.label}{hasPhoto ? '已上传' : ''}
+                                          </button>
+                                        )}
+                                        
+                                        {hasPhoto && (
+                                          <div className="relative group self-center animate-in scale-in-90 duration-200">
+                                            <div className="w-32 h-24 bg-white border-2 border-emerald-500/20 rounded-xl overflow-hidden shadow-lg group-hover:border-emerald-500/40 transition-all">
+                                              <img src={opt.img} className="w-full h-full object-cover" alt={opt.label} />
+                                            </div>
+                                            <div className="absolute top-1.5 right-1.5 flex gap-1">
+                                              <button 
+                                                onClick={() => togglePhoto(opt.id, false)}
+                                                className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg shadow-red-200 transition-all active:scale-90"
+                                              >
+                                                <X className="w-3 h-3" />
+                                              </button>
+                                            </div>
+                                            <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-[2px] py-1 px-2 border-t border-white/10">
+                                              <p className="text-[8px] text-white font-bold text-center tracking-wider">{opt.label}存证照</p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right Column: APP User Preview View - App */}
+                          <div className="w-[440px] flex-shrink-0 bg-gray-100 border-l border-gray-200 flex flex-col h-full">
+                            <div className="h-14 bg-white border-b border-gray-200 px-6 flex items-center justify-between flex-shrink-0">
+                              <span className="text-sm font-black text-gray-800 flex items-center gap-2">
+                                <Smartphone className="w-4 h-4 text-pink-500" />
+                                用户端 APP 预览
+                              </span>
+                              <div className="flex gap-1">
+                                <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse" />
+                                <div className="w-2 h-2 bg-pink-200 rounded-full" />
+                              </div>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto flex flex-col items-center py-4 bg-gray-50/50">
+                              <div className="w-[375px] space-y-3 pb-8">
+                                {/* Shipping Label Info */}
+                                <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mx-3">
+                                  <div className="p-4 flex items-center justify-between border-b border-gray-50">
+                                    <h3 className="text-sm font-bold text-gray-800">面单信息</h3>
+                                    <div className="flex items-center gap-1 text-[11px] text-pink-500 font-medium">
+                                      查看全部 <ChevronRight className="w-3.5 h-3.5" />
+                                    </div>
+                                  </div>
+                                  <div className="p-4 space-y-3 relative">
+                                    <div className="space-y-1">
+                                      <p className="text-[11px] text-gray-500 leading-none font-medium">品类: 未知品类/未知商品 / 数量: 1</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-[11px] text-gray-500 leading-none font-medium">品类: 未知品类/未知商品 / 数量: 1</p>
+                                    </div>
+                                    <div className="absolute right-4 bottom-4 w-10 h-10 bg-white shadow-xl rounded-full border border-pink-100 flex items-center justify-center text-pink-500">
+                                      <Headset className="w-5 h-5" />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Outbound Labels */}
+                                <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mx-3">
+                                  <div className="p-4 flex items-center justify-between border-b border-gray-50">
+                                    <h3 className="text-sm font-bold text-gray-800">出库标签 <span className="text-[11px] text-pink-400 font-normal ml-1">已选择3个标签</span></h3>
+                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                  </div>
+                                  <div className="p-5 flex flex-wrap gap-2.5 justify-center">
+                                    <div className="px-4 py-1.5 rounded-full border border-pink-300 text-[10px] text-pink-500 bg-pink-50/30 font-bold">
+                                      控制重量和体积重 (500G内)
+                                    </div>
+                                    <div className="px-6 py-1.5 rounded-full border border-gray-300 text-[10px] text-gray-500 bg-white font-bold">
+                                      不要弯折
+                                    </div>
+                                    <div className="px-8 py-1.5 rounded-full border border-pink-300 text-[10px] text-pink-500 bg-pink-50/30 font-bold">
+                                      请按顺丰规格打包
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Packing Images Carousel */}
+                                <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mx-3">
+                                  <div className="p-4 flex items-center justify-between border-b border-gray-50">
+                                    <h3 className="text-sm font-bold text-gray-800">出库平铺图</h3>
+                                    <div className="flex items-center gap-1 text-[11px] text-pink-500 font-medium">
+                                      查看全部 <ChevronRight className="w-3.5 h-3.5" />
+                                    </div>
+                                  </div>
+                                  <div className="p-0 relative group">
+                                    <div className="aspect-[4/3] bg-gray-200 overflow-hidden">
+                                      <img src="https://images.unsplash.com/photo-1586528116311-ad86d738111e?w=800" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="absolute left-4 bottom-4 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-sm text-[10px] text-white font-mono">1/4</div>
+                                  </div>
+                                </div>
+
+                                {/* 包裹其他相关 Section */}
+                                <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mx-3">
+                                  <div className="p-3.5 flex items-center justify-between border-b border-gray-50">
+                                    <h3 className="text-sm font-bold text-gray-800">包裹其他相关</h3>
+                                    <HelpCircle className="w-3.5 h-3.5 text-gray-300" />
+                                  </div>
+                                  <div className="p-4 grid grid-cols-2 gap-3">
+                                    {[
+                                      { id: 'takeout', label: '取出', img: 'https://images.unsplash.com/photo-1586528116311-ad86d738111e?w=800' },
+                                      { id: 'split', label: '拆分', img: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=800' },
+                                      { id: 'discard', label: '丢弃', img: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800' },
+                                      { id: 'damage', label: '破损', img: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=800' }
+                                    ].map((opt) => {
+                                      const hasPhoto = uploadedPhotos[opt.id];
+                                      return (
+                                        <button
+                                          key={opt.id}
+                                          onClick={() => { if (hasPhoto) setViewingPhotoUrl(opt.img); }}
+                                          className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl text-[11px] font-black transition-all shadow-sm active:scale-95 border ${
+                                            hasPhoto 
+                                              ? 'bg-red-500 border-red-600 text-white shadow-red-200 animate-pulse-slow' 
+                                              : 'bg-emerald-500 border-emerald-600 text-white shadow-emerald-100'
+                                          }`}
+                                        >
+                                          {hasPhoto ? '有' : '无'}{opt.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Grouped Items List */}
+                                <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mx-3">
+                                  <div className="p-4 flex items-center gap-2 border-b border-gray-50">
+                                    <div className="w-1.5 h-4 bg-blue-500 rounded-full" />
+                                    <h3 className="text-sm font-bold text-gray-800">参与当前拼邮的商品(9件)</h3>
+                                  </div>
+                                  <div className="p-8 flex flex-col items-center gap-4">
+                                    <div className="relative">
+                                      <div className="w-16 h-16 rounded-full border-2 border-white shadow-lg overflow-hidden ring-4 ring-gray-50">
+                                        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200" className="w-full h-full object-cover" alt="Item" />
+                                      </div>
+                                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
+                                        <Sparkles className="w-2.5 h-2.5 text-white" />
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[11px] text-gray-400 font-bold cursor-pointer hover:text-gray-600">
+                                      点击展开商品详情 <ChevronDown className="w-3.5 h-3.5" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
                       /* Standard fallback image content for pre-existing items */
                       <div className="h-full relative overflow-hidden rounded-2xl bg-white border border-gray-200">
                         <img 
@@ -692,6 +1013,45 @@ export default function App() {
           </div>
         </section>
       </main>
+
+      {/* User Side Packing Photo Viewer Modal */}
+      {viewingPhotoUrl && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setViewingPhotoUrl(null)}
+        >
+          <div 
+            className="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300"
+            onClick={e => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setViewingPhotoUrl(null)}
+              className="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 text-gray-800 rounded-full transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-full aspect-square bg-gray-100">
+              <img 
+                src={viewingPhotoUrl} 
+                className="w-full h-full object-cover" 
+                alt="Viewing Photo" 
+              />
+            </div>
+            <div className="p-6 bg-white">
+              <h4 className="text-sm font-bold text-gray-900 mb-2">打包异常存证图片</h4>
+              <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+                这是仓库打包员在处理您的包裹时拍摄的异常证据照片。您可以点击图片放大查看，如有异议请联系在线客服。
+              </p>
+              <button 
+                onClick={() => setViewingPhotoUrl(null)}
+                className="w-full py-4 bg-black text-white rounded-2xl font-bold text-sm tracking-wide shadow-lg active:scale-[0.98] transition-all"
+              >
+                确认并返回
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
