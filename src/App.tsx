@@ -847,16 +847,15 @@ export default function App() {
                                       const hasPhoto = uploadedPhotos[opt.id];
                                       return (
                                         <div key={opt.id} className="space-y-2">
-                                          <button
-                                            onClick={() => { if (hasPhoto) setViewingPhotoUrl(opt.img); }}
-                                            className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl text-[11px] font-black transition-all shadow-sm active:scale-95 border ${
+                                          <div
+                                            className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl text-[11px] font-black transition-all shadow-sm border ${
                                               hasPhoto 
                                                 ? 'bg-red-500 border-red-600 text-white shadow-red-200 animate-pulse-slow' 
                                                 : 'bg-emerald-500 border-emerald-600 text-white shadow-emerald-100'
                                             }`}
                                           >
                                             {hasPhoto ? '有' : '无'}{opt.label}
-                                          </button>
+                                          </div>
                                           {hasPhoto && (
                                             <div 
                                               className="rounded-xl overflow-hidden border border-red-100 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300 cursor-pointer"
