@@ -41,7 +41,24 @@ import {
   Layers,
   Plus,
   X,
-  Headset
+  Headset,
+  RotateCcw,
+  Maximize2,
+  Languages,
+  User,
+  Home,
+  Users,
+  ShoppingCart,
+  Gavel,
+  Warehouse,
+  PackageCheck,
+  ClipboardList,
+  MoreHorizontal,
+  Settings,
+  Wrench,
+  Smile,
+  History,
+  Package
 } from 'lucide-react';
 import { MOCK_PROJECTS } from './constants';
 import { PrototypeProject } from './types';
@@ -86,6 +103,14 @@ export default function App() {
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewingPhotoUrl, setViewingPhotoUrl] = useState<string | null>(null);
+
+  // 20260515 Project States
+  const [showBoxModal, setShowBoxModal] = useState(false);
+  const [boxCode, setBoxCode] = useState('');
+  const [tempBoxCode, setTempBoxCode] = useState('');
+  const [isIssueOrder, setIsIssueOrder] = useState(false);
+  const [isWithBox, setIsWithBox] = useState(false);
+  const [isCC, setIsCC] = useState(false);
 
   // 打包异常图片 state
   const [uploadedPhotos, setUploadedPhotos] = useState<Record<string, boolean>>({});
@@ -899,6 +924,466 @@ export default function App() {
                                   </div>
                                 </div>
                               </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : selectedId === '20260515' ? (
+                        /* Rakutao Management System Reconstruction */
+                        <div className="h-full flex bg-[#001529] text-gray-300 font-sans overflow-hidden">
+                          {/* Sidebar */}
+                          <aside className="w-48 flex-shrink-0 flex flex-col h-full bg-[#001529]">
+                            {/* Logo */}
+                            <div className="h-12 bg-[#ff4d4f] flex items-center px-4 gap-2 shrink-0">
+                              <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
+                                <Box className="w-4 h-4 text-[#ff4d4f]" />
+                              </div>
+                              <span className="text-white font-bold text-[13px] truncate">Rakutao管理端 V1.3.93</span>
+                            </div>
+
+                            {/* Nav Menu */}
+                            <div className="flex-1 overflow-y-auto pt-2 custom-scrollbar">
+                              <div className="px-4 py-3 flex items-center gap-3 hover:bg-white/5 cursor-pointer text-sm">
+                                <Home className="w-4 h-4" />
+                                <span>首页</span>
+                              </div>
+                              
+                              <div className="px-4 py-3 flex items-center justify-between hover:bg-white/5 cursor-pointer text-sm group">
+                                <div className="flex items-center gap-3">
+                                  <Users className="w-4 h-4" />
+                                  <span>会员管理</span>
+                                </div>
+                                <ChevronDown className="w-3 h-3 opacity-40 group-hover:opacity-100" />
+                              </div>
+
+                              <div className="px-4 py-3 flex items-center justify-between hover:bg-white/5 cursor-pointer text-sm group">
+                                <div className="flex items-center gap-3">
+                                  <ShoppingCart className="w-4 h-4" />
+                                  <span className="flex items-center gap-1">
+                                    订单管理
+                                    <div className="w-1.5 h-1.5 bg-[#ff4d4f] rounded-full" />
+                                  </span>
+                                </div>
+                                <ChevronDown className="w-3 h-3 opacity-40 group-hover:opacity-100" />
+                              </div>
+
+                              <div className="px-4 py-3 flex items-center justify-between hover:bg-white/5 cursor-pointer text-sm group">
+                                <div className="flex items-center gap-3">
+                                  <Gavel className="w-4 h-4" />
+                                  <span>拍卖订单</span>
+                                </div>
+                                <ChevronDown className="w-3 h-3 opacity-40 group-hover:opacity-100" />
+                              </div>
+
+                              {/* Expanded Section: 仓储管理 */}
+                              <div className="bg-black/20">
+                                <div className="px-4 py-3 flex items-center justify-between hover:bg-white/5 cursor-pointer text-sm group text-[#1890ff] bg-[#1890ff]/10">
+                                  <div className="flex items-center gap-3 font-medium">
+                                    <Warehouse className="w-4 h-4" />
+                                    <span>仓储管理</span>
+                                  </div>
+                                  <ChevronDown className="w-3 h-3 rotate-180" />
+                                </div>
+                                
+                                <div className="py-1">
+                                  {[
+                                    { name: '包裹到仓验收', active: false },
+                                    { name: '仓储入库', active: false },
+                                    { name: '仓储列表', active: false },
+                                    { name: '仓储入库(2.0)', active: true },
+                                    { name: '入库编号设置', active: false },
+                                    { name: '入库工单', active: false, badge: '99+' },
+                                    { name: '入库上架分析', active: false },
+                                  ].map((opt, i) => (
+                                    <div 
+                                      key={i} 
+                                      className={`pl-11 py-2.5 flex items-center justify-between text-[11.5px] cursor-pointer transition-colors ${
+                                        opt.active ? 'text-white bg-[#1890ff]' : 'text-gray-400 hover:text-white'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {opt.name === '包裹到仓验收' && <ChevronRight className="w-3 h-3 -ml-5" />}
+                                        {opt.name === '仓储入库' && <ClipboardList className="w-3.5 h-3.5 -ml-6" />}
+                                        {opt.name === '仓储列表' && <Box className="w-3.5 h-3.5 -ml-6" />}
+                                        {opt.name === '仓储入库(2.0)' && <Layout className="w-3.5 h-3.5 -ml-6" />}
+                                        {opt.name === '入库编号设置' && <Settings className="w-3.5 h-3.5 -ml-6" />}
+                                        {opt.name === '入库工单' && <Wrench className="w-3.5 h-3.5 -ml-6" />}
+                                        {opt.name === '入库上架分析' && <History className="w-3.5 h-3.5 -ml-6" />}
+                                        <span>{opt.name}</span>
+                                      </div>
+                                      {opt.badge && (
+                                        <span className="bg-[#ffbb96] text-[#c41d7f] text-[9px] font-bold px-1 rounded mr-4">
+                                          {opt.badge}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </aside>
+
+                          {/* Main Content Pane */}
+                          <div className="flex-1 flex flex-col bg-[#f0f2f5] overflow-hidden relative">
+                            {/* Content Header (Toolbar) */}
+                            <div className="h-12 bg-white flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
+                              <div className="flex items-center gap-4">
+                                <Menu className="w-4 h-4 text-gray-500 cursor-pointer" />
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                  <span>首页</span>
+                                  <span className="text-gray-300">/</span>
+                                  <span>仓储管理</span>
+                                  <span className="text-gray-300">/</span>
+                                  <span className="text-gray-400">仓储入库(2.0)</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-5 text-gray-500">
+                                <Search className="w-4 h-4 cursor-pointer hover:text-black" />
+                                <Maximize2 className="w-4 h-4 cursor-pointer hover:text-black" />
+                                <Languages className="w-4 h-4 cursor-pointer hover:text-black" />
+                                <Smile className="w-4 h-4 cursor-pointer hover:text-black" />
+                              </div>
+                            </div>
+
+                            {/* Tabs Bar */}
+                            <div className="flex bg-white border-t border-gray-100 px-3 pt-2 shrink-0 overflow-x-auto gap-0.5">
+                              <div className="px-3 py-1.5 text-xs text-gray-400 border border-gray-100 border-b-0 rounded-t cursor-pointer hover:bg-gray-50 bg-white">
+                                首页
+                              </div>
+                              <div className="px-3 py-1.5 text-xs text-[#52c41a] font-medium border border-gray-100 border-b-0 rounded-t bg-[#f6ffed] flex items-center gap-2">
+                                <div className="w-2 h-2 bg-[#52c41a] rounded-full" />
+                                仓储入库(2.0)
+                                <X className="w-3 h-3 hover:bg-[#52c41a]/10 rounded" />
+                              </div>
+                            </div>
+
+                            {/* Floating Buttons */}
+                            <div className="absolute top-[108px] right-8 z-30 pointer-events-none flex flex-col gap-3">
+                              <button 
+                                onClick={() => {
+                                  setTempBoxCode(boxCode);
+                                  setShowBoxModal(true);
+                                }}
+                                className={`${boxCode ? 'bg-white border-[#5d5fb1] text-[#5d5fb1]' : 'bg-[#5d5fb1] text-white'} px-3 py-2 rounded-md flex flex-col items-center justify-center min-w-[72px] shadow-lg pointer-events-auto active:scale-95 transition-all border`}
+                              >
+                                <Warehouse className="w-4 h-4 mb-0.5" />
+                                <span className="text-[11px] font-bold">{isCC ? 'CC专用' : (boxCode || '未设置')}</span>
+                                {(boxCode || isCC) && <span className="text-[9px] opacity-60">流转箱</span>}
+                              </button>
+                              <button 
+                                onClick={() => setIsIssueOrder(!isIssueOrder)}
+                                className={`${isIssueOrder ? 'bg-red-500 scale-105 shadow-red-200' : 'bg-gray-400 opacity-60'} text-white px-3 py-2 rounded-md flex flex-col items-center justify-center min-w-[72px] shadow-lg pointer-events-auto active:scale-95 transition-all outline-none`}
+                              >
+                                {isIssueOrder ? (
+                                  <>
+                                    <AlertTriangle className="w-4 h-4 mb-0.5" />
+                                    <span className="text-[11px] font-bold">问题单</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ClipboardList className="w-4 h-4 mb-0.5" />
+                                    <span className="text-[11px] font-bold">设为问题</span>
+                                  </>
+                                )}
+                              </button>
+                              <button 
+                                onClick={() => setIsWithBox(!isWithBox)}
+                                className={`${isWithBox ? 'bg-amber-500 scale-105 shadow-amber-200' : 'bg-gray-400 opacity-60'} text-white px-3 py-2 rounded-md flex flex-col items-center justify-center min-w-[72px] shadow-lg pointer-events-auto active:scale-95 transition-all outline-none`}
+                              >
+                                {isWithBox ? (
+                                  <>
+                                    <Package className="w-4 h-4 mb-0.5" />
+                                    <span className="text-[11px] font-bold">带箱</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Box className="w-4 h-4 mb-0.5" />
+                                    <span className="text-[11px] font-bold">设为带箱</span>
+                                  </>
+                                )}
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setIsCC(!isCC);
+                                  if (!isCC) setBoxCode('CC-BOX');
+                                  else if (boxCode === 'CC-BOX') setBoxCode('');
+                                }}
+                                className={`${isCC ? 'bg-indigo-600 scale-105 shadow-indigo-200' : 'bg-gray-400 opacity-60'} text-white px-3 py-2 rounded-md flex flex-col items-center justify-center min-w-[72px] shadow-lg pointer-events-auto active:scale-95 transition-all outline-none`}
+                              >
+                                {isCC ? (
+                                  <>
+                                    <Sparkles className="w-4 h-4 mb-0.5" />
+                                    <span className="text-[11px] font-bold">CC</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <RefreshCw className="w-4 h-4 mb-0.5" />
+                                    <span className="text-[11px] font-bold">设为CC</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Content Scroll Area */}
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                              <div className="space-y-4 max-w-[1400px] mx-auto pb-10">
+                                
+                                {/* Step/Flow Header */}
+                                <div className="bg-white p-4 rounded shadow-sm flex items-center h-16">
+                                  <div className="flex-1 flex items-center justify-center gap-4 text-blue-500 border-r border-gray-50">
+                                    <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center">
+                                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                                    </div>
+                                    <span className="text-sm font-medium">选择关联订单</span>
+                                  </div>
+                                  <div className="w-20 flex items-center justify-center">
+                                    <ChevronRight className="w-6 h-6 text-gray-200" />
+                                  </div>
+                                  <div className="flex-1 flex items-center justify-center gap-4 text-gray-300">
+                                    <div className="w-5 h-5 rounded-full border border-gray-200" />
+                                    <span className="text-sm">完善商品信息</span>
+                                  </div>
+                                  <div className="shrink-0 pl-10 pr-2 opacity-0 pointer-events-none">
+                                    {/* Placeholder to keep spacing in header */}
+                                    <div className="w-24 h-8" />
+                                  </div>
+                                </div>
+
+                                {/* Order Association Card */}
+                                <div className="bg-white rounded shadow-sm">
+                                  <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-gray-700">入库关联订单</h3>
+                                    <div className="flex items-center gap-1 text-[11.5px] text-blue-400 cursor-pointer hover:text-blue-500">
+                                      收起搜索 <ChevronDown className="w-3.5 h-3.5 rotate-180" />
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="p-6 space-y-5">
+                                    <div className="flex flex-wrap gap-x-6 gap-y-4">
+                                      {/* Search Fields Grid */}
+                                      <div className="flex items-center gap-2 min-w-[200px]">
+                                        <span className="text-[11.5px] text-gray-400 w-12 text-right">mid</span>
+                                        <input type="text" placeholder="mid" className="flex-1 border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-100 outline-none" />
+                                      </div>
+                                      <div className="flex items-center gap-2 min-w-[320px]">
+                                        <span className="text-[11.5px] text-gray-400 w-16 text-right">快递单号</span>
+                                        <input type="text" placeholder="快递单号" className="flex-1 border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-100 outline-none" />
+                                        <div className="flex items-center gap-1 bg-gray-50 px-2 py-1.5 rounded border border-gray-200">
+                                          <span className="text-[10px] text-gray-400 font-bold">关</span>
+                                          <div className="w-8 h-4 bg-blue-500 rounded-full relative">
+                                            <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full" />
+                                          </div>
+                                          <span className="text-[10px] text-blue-500 font-bold">验</span>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2 min-w-[200px]">
+                                        <span className="text-[11.5px] text-gray-400 w-16 text-right">平台单号</span>
+                                        <input type="text" placeholder="平台单号" className="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-100 outline-none" />
+                                      </div>
+                                      <div className="flex items-center gap-2 min-w-[200px]">
+                                        <span className="text-[11.5px] text-gray-400 w-12 text-right">标签</span>
+                                        <div className="flex-1 flex flex-wrap gap-1 items-center min-h-[32px] border border-gray-200 rounded px-2 py-1">
+                                          {isIssueOrder && (
+                                            <span className="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded border border-red-100 font-bold flex items-center gap-1">
+                                              问题单
+                                              <X className="w-2.5 h-2.5 cursor-pointer" onClick={() => setIsIssueOrder(false)} />
+                                            </span>
+                                          )}
+                                          {isWithBox && (
+                                            <span className="bg-amber-50 text-amber-600 text-[10px] px-1.5 py-0.5 rounded border border-amber-100 font-bold flex items-center gap-1">
+                                              带箱
+                                              <X className="w-2.5 h-2.5 cursor-pointer" onClick={() => setIsWithBox(false)} />
+                                            </span>
+                                          )}
+                                          {isCC && (
+                                            <span className="bg-indigo-50 text-indigo-600 text-[10px] px-1.5 py-0.5 rounded border border-indigo-100 font-bold flex items-center gap-1">
+                                              CC
+                                              <X className="w-2.5 h-2.5 cursor-pointer" onClick={() => setIsCC(false)} />
+                                            </span>
+                                          )}
+                                          {!isIssueOrder && !isWithBox && !isCC && <span className="text-gray-300 text-xs">-</span>}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2 min-w-[200px]">
+                                        <span className="text-[11.5px] text-gray-400 w-16 text-right">卖家ID</span>
+                                        <input type="text" placeholder="卖家ID" className="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-100 outline-none" />
+                                      </div>
+                                      <div className="flex items-center gap-2 min-w-[180px]">
+                                        <span className="text-[11.5px] text-gray-400 w-16 text-right">入库ID</span>
+                                        <input type="text" placeholder="入库ID" className="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-100 outline-none" />
+                                      </div>
+                                      
+                                      {/* Lower Search Row */}
+                                      <div className="w-full flex flex-wrap gap-x-6 gap-y-4 pt-1">
+                                        <div className="flex items-center gap-2 min-w-[200px]">
+                                          <span className="text-[11.5px] text-gray-400 w-12 text-right">购买账号</span>
+                                          <input type="text" placeholder="购买账号" className="flex-1 border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-100 outline-none" />
+                                        </div>
+                                        <div className="flex items-center gap-2 min-w-[240px]">
+                                          <span className="text-[11.5px] text-gray-400 w-16 text-right">商品名称</span>
+                                          <input type="text" placeholder="商品名称" className="flex-1 border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-100 outline-none" />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-32 flex items-center border border-gray-200 rounded overflow-hidden">
+                                            <div className="bg-gray-50 border-r border-gray-200 p-1.5">
+                                               <History className="w-3.5 h-3.5 text-gray-400" />
+                                            </div>
+                                            <input type="text" placeholder="开始" className="w-full px-2 py-1.5 text-xs outline-none text-center" />
+                                          </div>
+                                          <span className="text-gray-300">-</span>
+                                          <div className="w-24 border border-gray-200 rounded overflow-hidden">
+                                            <input type="text" placeholder="结束" className="w-full px-2 py-1.5 text-xs outline-none text-center" />
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          <span className="text-[11.5px] font-bold text-gray-600">平台</span>
+                                          <select className="w-24 border border-gray-200 rounded px-2 py-1.5 text-xs bg-white outline-none">
+                                            <option>全部</option>
+                                          </select>
+                                        </div>
+                                        
+                                        <div className="flex-1 flex justify-end gap-3 pr-2">
+                                          <button className="bg-[#1890ff] text-white px-5 py-1.5 rounded flex items-center gap-2 text-xs shadow-sm hover:bg-[#40a9ff] transition-all">
+                                            <Search className="w-3.5 h-3.5" />
+                                            搜索
+                                          </button>
+                                          <button className="bg-white border border-gray-200 text-gray-500 px-5 py-1.5 rounded flex items-center gap-2 text-xs shadow-sm hover:bg-gray-50 transition-all">
+                                            <RotateCcw className="w-3.5 h-3.5" />
+                                            重置
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Records Table Card */}
+                                <div className="bg-white rounded shadow-sm overflow-hidden">
+                                  <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-gray-700">最近成功入库记录 (自动刷新)</h3>
+                                    <div className="text-[11.5px] text-blue-400 cursor-pointer hover:text-blue-500">
+                                      手动刷新
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="overflow-x-auto w-full">
+                                    <table className="w-full border-collapse">
+                                      <thead className="bg-[#f8f9fb]">
+                                        <tr>
+                                          {['ID', '入库员', '商品MID', 'MID/商品名称', '商品图片', '入库图片', '会员ID', '卖家快递单号', '到付金额', '商品重量/克'].map((h, i) => (
+                                            <th key={i} className="py-3 px-4 border border-gray-100 text-[11.5px] font-bold text-gray-600 whitespace-nowrap text-center">
+                                              {h}
+                                            </th>
+                                          ))}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr className="border-b border-gray-100">
+                                          <td colSpan={10} className="py-20 text-center">
+                                            <div className="flex flex-col items-center justify-center opacity-30 text-gray-400">
+                                              <div className="w-32 h-2 bg-gray-100 rounded-full mb-3 overflow-hidden">
+                                                <div className="w-1/2 h-full bg-blue-500/50 animate-shimmer" />
+                                              </div>
+                                              <p className="text-xs font-medium tracking-[0.2em]">暂无数据</p>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                    {/* Table Scrollbar Handle Simulation */}
+                                    <div className="bg-[#e9ecef] mx-4 my-3 h-1.5 rounded-full relative">
+                                      <div className="absolute left-[20%] w-[50%] h-full bg-gray-400/40 rounded-full" />
+                                      <ChevronLeft className="absolute -left-3 -top-1 w-3.5 h-3.5 text-gray-400 rotate-180" />
+                                      <ChevronRight className="absolute -right-3 -top-1 w-3.5 h-3.5 text-gray-400" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Circulation Box Modal */}
+                              <AnimatePresence>
+                                {showBoxModal && (
+                                  <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
+                                    <motion.div 
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      exit={{ opacity: 0 }}
+                                      onClick={() => setShowBoxModal(false)}
+                                      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                                    />
+                                    <motion.div 
+                                      initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                                      exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                      className="bg-white rounded-2xl w-full max-w-[360px] shadow-2xl relative z-10 overflow-hidden text-gray-800"
+                                    >
+                                      <div className="bg-[#5d5fb1] p-5 text-white flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                                            <Box className="w-5 h-5 text-white" />
+                                          </div>
+                                          <div>
+                                            <h4 className="font-bold text-sm">扫码流转箱</h4>
+                                            <p className="text-[10px] text-white/70">请配合扫码枪或手动输入</p>
+                                          </div>
+                                        </div>
+                                        <button onClick={() => setShowBoxModal(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
+                                          <X className="w-5 h-5" />
+                                        </button>
+                                      </div>
+
+                                      <div className="p-6 space-y-6">
+                                        <div className="space-y-2">
+                                          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider pl-1">流转箱编码</label>
+                                          <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                                              <Code2 className="w-4 h-4 text-gray-300 group-focus-within:text-[#5d5fb1] transition-colors" />
+                                            </div>
+                                            <input 
+                                              autoFocus
+                                              type="text" 
+                                              placeholder="例如: RY-00000465"
+                                              value={tempBoxCode}
+                                              onChange={(e) => setTempBoxCode(e.target.value.toUpperCase())}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  setBoxCode(tempBoxCode);
+                                                  setShowBoxModal(false);
+                                                }
+                                              }}
+                                              className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 pl-10 pr-4 text-sm font-mono focus:border-[#5d5fb1] focus:bg-white outline-none transition-all shadow-inner"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 pt-2">
+                                          <button 
+                                            onClick={() => setShowBoxModal(false)}
+                                            className="py-3 px-4 border-2 border-gray-100 text-gray-400 text-xs font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                                          >
+                                            取消操作
+                                          </button>
+                                          <button 
+                                            onClick={() => {
+                                              setBoxCode(tempBoxCode);
+                                              setShowBoxModal(false);
+                                            }}
+                                            className="py-3 px-4 bg-[#5d5fb1] text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-100 active:scale-95 transition-all"
+                                          >
+                                            确认录入
+                                          </button>
+                                        </div>
+                                        
+                                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 flex gap-3">
+                                          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                                          <p className="text-[10px] text-amber-700 leading-normal">
+                                            流转箱绑定后，后续入库的商品将自动标记存放于该箱。
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  </div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           </div>
                         </div>
