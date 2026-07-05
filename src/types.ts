@@ -14,6 +14,7 @@ export interface PrototypeProject {
   previewUrl: string | null;
   redmineUrl?: string;
   subItems?: { id: string; name: string }[];
+  status?: 'completed' | 'in-progress';
 }
 
 export interface AppState {
