@@ -4,11 +4,103 @@ import { MOCK_PACKAGE_ORDERS } from '../constants';
 
 const LOGISTICS_INTENTS = [
   { 
-    id: 'default', 
-    title: '我不知道，打包后再看看', 
-    desc: '暂不确定线路，仓库按常规标准使用纸箱打包',
-    adminTags: ['常规纸箱', '正常打包'],
-    adminIntent: '未指定路线'
+    id: 'pg_route', 
+    title: '【蒲公英专线】', 
+    desc: '⚠️注意：蒲公英专线涉及人工审核，打包后切换非蒲公英需支付额外费用。',
+    adminTags: ['蒲公英', '人工预审', '尽可能紧凑'],
+    adminIntent: '蒲公英路线',
+    hasSubOptions: true,
+    subOptions: [
+      {
+        id: 'pg_sf',
+        title: '蒲公英-顺丰国际',
+        desc: '【必须使用付费新箱】顺丰官方直邮。',
+        adminTags: ['【蒲公英】', '顺丰', '强制新箱'],
+        adminIntent: '蒲公英-顺丰国际',
+        requireNewBox: true,
+      },
+      {
+        id: 'pg_jd',
+        title: '蒲公英-京东物流',
+        desc: '【必须使用付费新箱】时效快，派送质量高。',
+        adminTags: ['【蒲公英】', '京东', '强制新箱'],
+        adminIntent: '蒲公英-京东物流',
+        requireNewBox: true,
+      }
+    ]
+  },
+  { 
+    id: 'vol_weight_non_pg', 
+    title: '体积重量取大值 (常规杂货)', 
+    desc: '涵盖各类专线杂货路线。发此路线需兼顾体积与实重，打包员会尽量压缩体积。',
+    adminTags: ['常规纸箱', '严格控制体积', '尽可能紧凑'],
+    adminIntent: '控制体积重路线',
+    hasSubOptions: true,
+    subOptions: [
+      {
+        id: 'sf_za',
+        title: '顺丰杂货',
+        desc: '常规包装。',
+        adminTags: ['顺丰', '杂货'],
+        adminIntent: '顺丰杂货',
+        requireNewBox: false,
+        maxOrders: 20
+      },
+      {
+        id: 'sf_shipin',
+        title: '顺丰饰品专线',
+        desc: '适合小包裹。',
+        adminTags: ['顺丰', '饰品'],
+        adminIntent: '顺丰饰品专线',
+        requireNewBox: false,
+        maxOrders: 20
+      },
+      {
+        id: 'sf_clothes',
+        title: '顺丰衣物特快小包',
+        desc: '适合衣物。',
+        adminTags: ['顺丰', '衣物特快小包'],
+        adminIntent: '顺丰衣物特快小包',
+        requireNewBox: false,
+        maxOrders: 20
+      },
+      {
+        id: 'sf_dolls',
+        title: '顺丰娃娃专线',
+        desc: '适合娃娃及相关配件。',
+        adminTags: ['顺丰', '娃娃专线'],
+        adminIntent: '顺丰娃娃专线',
+        requireNewBox: false,
+        maxOrders: 20
+      },
+      {
+        id: 'sf_shouban',
+        title: '顺丰手办玩偶专线',
+        desc: '适合手办等需保护物品。',
+        adminTags: ['顺丰', '手办玩偶'],
+        adminIntent: '顺丰手办玩偶专线',
+        requireNewBox: false,
+        maxOrders: 20
+      },
+      {
+        id: 'zt_za',
+        title: '中通杂货',
+        desc: '高性价比专线。',
+        adminTags: ['中通', '杂货'],
+        adminIntent: '中通杂货',
+        requireNewBox: false,
+        maxOrders: 20
+      },
+      {
+        id: 'st_za',
+        title: '申通杂货',
+        desc: '经济实惠专线。',
+        adminTags: ['申通', '杂货'],
+        adminIntent: '申通杂货',
+        requireNewBox: false,
+        maxOrders: 20
+      }
+    ]
   },
   { 
     id: 'pure_weight', 
@@ -16,40 +108,6 @@ const LOGISTICS_INTENTS = [
     desc: '发此路线不看体积重，只需注意实重。打包员无需刻意挤压体积。',
     adminTags: ['常规纸箱', '无视体积重'],
     adminIntent: '纯重量路线'
-  },
-  { 
-    id: 'vol_weight', 
-    title: '体积重量取大值路线', 
-    desc: '发此路线需兼顾体积与实重。打包员会尽量压缩体积。',
-    adminTags: ['常规纸箱', '严格控制体积', '尽可能紧凑'],
-    adminIntent: '控制体积重路线',
-    hasSubOptions: true,
-    subOptions: [
-      {
-        id: 'pg_jd',
-        title: '蒲公英-京东',
-        desc: '【必须使用付费新箱】时效快，派送质量高。',
-        adminTags: ['【蒲公英】', '京东', '强制新箱'],
-        adminIntent: '蒲公英-京东',
-        requireNewBox: true
-      },
-      {
-        id: 'pg_sf',
-        title: '蒲公英-顺丰国际',
-        desc: '【必须使用付费新箱】顺丰官方直邮。',
-        adminTags: ['【蒲公英】', '顺丰', '强制新箱'],
-        adminIntent: '蒲公英-顺丰国际',
-        requireNewBox: true
-      },
-      {
-        id: 'vol_other',
-        title: '其他体积路线 (EMS等)',
-        desc: '常规体积路线，可自由选择包装。',
-        adminTags: ['控制体积重', '普通路线'],
-        adminIntent: '其他体积路线',
-        requireNewBox: false
-      }
-    ]
   },
   { 
     id: 'specific_route',
@@ -94,21 +152,28 @@ const LOGISTICS_INTENTS = [
         isDanger: false
       }
     ]
+  },
+  { 
+    id: 'default', 
+    title: '我不知道，打包后再看看', 
+    desc: '暂不确定线路，仓库按常规标准使用纸箱打包',
+    adminTags: ['常规纸箱', '正常打包'],
+    adminIntent: '未指定路线'
   }
 ];
 
 const BOX_OPTIONS = [
-  { id: 'free_box', title: '免费旧箱/快递袋', desc: '使用仓库二手纸箱或快递袋打包。', price: 0 },
+  { id: 'free_box', title: '免费旧箱', desc: '使用仓库二手纸箱打包。若选择了袋装路线，会使用快递袋。', price: 0 },
   { id: 'new_box', title: '付费新箱', desc: '使用全新加厚纸箱打包，更安全。', price: 200 },
-  { id: 'original_box', title: '岛内原箱', desc: '直接使用原卖家发来的箱子（若无合适外箱则使用免费旧箱/快递袋）。', price: 0 }
+  { id: 'original_box', title: '岛内原箱', desc: '要求此次合单中某单的原箱可用，默认使用其中最大的原箱来装下所有订单。', price: 0 }
 ];
 
 export function Flow20260708() {
   const [appStep, setAppStep] = useState<'list' | 'form'>('list');
   const [selectedPackageOrders, setSelectedPackageOrders] = useState<string[]>([]);
   
-  const [logisticsIntent, setLogisticsIntent] = useState<string>('default');
-  const [specificRoute, setSpecificRoute] = useState<string>('');
+  const [logisticsIntent, setLogisticsIntent] = useState<string>('pg_route');
+  const [specificRoute, setSpecificRoute] = useState<string>('pg_sf');
   
   const [boxOption, setBoxOption] = useState<string>('free_box');
   const [weightControlOption, setWeightControlOption] = useState<string>('no_control');
@@ -290,7 +355,7 @@ export function Flow20260708() {
             </div>
             
             <div className="flex-1 overflow-y-auto bg-[#f5f5f5] pb-32">
-              {MOCK_PACKAGE_ORDERS.slice(0, 3).map((order) => {
+              {MOCK_PACKAGE_ORDERS.map((order) => {
                 const isSelected = selectedPackageOrders.includes(order.id);
                 return (
                   <div key={order.id} className="bg-white m-3 rounded-lg shadow-sm overflow-hidden border border-gray-100">
@@ -317,9 +382,9 @@ export function Flow20260708() {
                         </div>
                       </div>
                       
-                      <div className="flex-1 flex flex-col justify-between h-20 py-0.5">
-                        <div>
-                          <h3 className="text-[13px] font-medium text-gray-800 leading-snug line-clamp-2">{order.title}</h3>
+                      <div className="flex-1 flex flex-col justify-between h-20 py-0.5 min-w-0">
+                        <div className="min-w-0">
+                          <h3 className="text-[13px] font-medium text-gray-800 leading-snug truncate">{order.title}</h3>
                           <div className="inline-block px-1.5 py-0.5 bg-[#d1586e] text-white rounded text-[10px] mt-1">优购</div>
                         </div>
                         <div className="flex flex-col mt-auto">
@@ -435,32 +500,40 @@ export function Flow20260708() {
                               <div className="mt-3 ml-7 space-y-2 border-t border-blue-100 pt-3">
                                 {intent.subOptions?.map(route => {
                                   const isRouteSelected = specificRoute === route.id;
+                                  const maxOrders = (route as any).maxOrders;
+                                  const isMaxOrdersExceeded = maxOrders !== undefined && selectedPackageOrders.length > maxOrders;
                                   return (
                                     <div 
                                       key={route.id}
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        if (isMaxOrdersExceeded) return;
                                         setSpecificRoute(route.id);
                                         if ((route as any).isBag) {
                                           setBoxOption('free_box');
                                         }
                                       }}
-                                      className={`p-2.5 rounded border ${isRouteSelected ? 'border-blue-400 bg-white' : 'border-gray-200 bg-white hover:border-blue-300'}`}
+                                      className={`p-2.5 rounded border ${isMaxOrdersExceeded ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : isRouteSelected ? 'border-blue-400 bg-white' : 'border-gray-200 bg-white hover:border-blue-300'}`}
                                     >
                                       <div className="flex items-start gap-2">
-                                        <div className={`w-3.5 h-3.5 mt-0.5 rounded-full border-2 shrink-0 flex items-center justify-center ${isRouteSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'}`}>
-                                          {isRouteSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"/>}
+                                        <div className={`w-3.5 h-3.5 mt-0.5 rounded-full border-2 shrink-0 flex items-center justify-center ${isRouteSelected && !isMaxOrdersExceeded ? 'border-blue-500 bg-blue-500' : 'border-gray-300'}`}>
+                                          {isRouteSelected && !isMaxOrdersExceeded && <div className="w-1.5 h-1.5 bg-white rounded-full"/>}
                                         </div>
                                         <div className="flex-1">
-                                          <div className={`font-bold text-[13px] ${isRouteSelected ? 'text-blue-900' : 'text-gray-800'}`}>
+                                          <div className={`font-bold text-[13px] ${isMaxOrdersExceeded ? 'text-gray-500' : isRouteSelected ? 'text-blue-900' : 'text-gray-800'}`}>
                                             {route.title}
-                                            {route.isDanger && <span className="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">免责</span>}
-                                            {(route as any).requireNewBox && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">仅限新箱</span>}
+                                            {route.isDanger && <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded ${isMaxOrdersExceeded ? 'bg-gray-200 text-gray-500' : 'bg-amber-100 text-amber-700'}`}>免责</span>}
+                                            {(route as any).requireNewBox && <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded ${isMaxOrdersExceeded ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>仅限新箱</span>}
                                           </div>
                                           <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-wrap leading-relaxed">
                                             {route.desc}
                                           </div>
-                                          {isRouteSelected && (route as any).isBag && (
+                                          {isMaxOrdersExceeded && (
+                                            <div className="mt-2 text-[11px] text-rose-500 font-medium">
+                                              此路线最多支持{maxOrders}个订单合单。您当前已选{selectedPackageOrders.length}单，已超限无法选择。
+                                            </div>
+                                          )}
+                                          {isRouteSelected && (route as any).isBag && !isMaxOrdersExceeded && (
                                             <div className="mt-2 p-2 bg-purple-50 rounded text-[11px] text-purple-700 flex gap-1.5 items-start border border-purple-100">
                                               <Package className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                                               <div className="leading-relaxed">
@@ -476,27 +549,73 @@ export function Flow20260708() {
                                 })}
                               </div>
                             )}
+
+                            {isSelected && intent.id === 'pure_weight' && (
+                              <div className="mt-3 ml-7 space-y-2 border-t border-blue-100 pt-3">
+                                <div className="text-[12px] text-blue-800 font-bold mb-1 flex items-center gap-1.5">
+                                  <Info className="w-3.5 h-3.5" />
+                                  该意向包含以下纯重量路线：
+                                </div>
+                                <div className="space-y-2">
+                                  {[
+                                    { title: '【EMS-日本邮政】', desc: '时效最快，首重与续重均按纯重量计费，不计算体积重。' },
+                                    { title: '【空运-日本邮政】', desc: '时效稳定，航空运输，纯重量计费。' },
+                                    { title: '【海运-日本邮政】', desc: '经济实惠，适合大件或非紧急物品，纯重量计费。' },
+                                    { title: '【EPL小包裹-日本邮政】', desc: '极具性价比的轻小件专属纯重量邮递路线（重量2000g为止）。' }
+                                  ].map((route, rIdx) => (
+                                    <div 
+                                      key={rIdx}
+                                      className="p-2.5 rounded border border-blue-100 bg-white"
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-blue-400 shrink-0" />
+                                        <div className="flex-1">
+                                          <div className="font-bold text-[13px] text-blue-950">
+                                            {route.title}
+                                          </div>
+                                          <div className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                                            {route.desc}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
                     </div>
 
                     <div className="mt-4 flex justify-end">
-                      <button 
-                        onClick={() => {
-                          const currentIntent = LOGISTICS_INTENTS.find(i => i.id === logisticsIntent);
-                          const currentSubRoute = currentIntent?.subOptions?.find(s => s.id === specificRoute);
-                          if ((currentSubRoute as any)?.isBag) {
-                             setBoxOption('free_box');
-                          } else if ((currentSubRoute as any)?.requireNewBox) {
-                             setBoxOption('new_box');
-                          }
-                          setFormActiveStep(2);
-                        }}
-                        className="bg-[#ffd200] text-gray-900 px-6 py-2 rounded-full text-[14px] font-bold active:scale-95 transition-transform"
-                      >
-                        确认意向，下一步
-                      </button>
+                      {(() => {
+                        const currentIntentObj = LOGISTICS_INTENTS.find(i => i.id === logisticsIntent);
+                        const currentSubRouteObj = currentIntentObj?.subOptions?.find(s => s.id === specificRoute);
+                        const isCurrentRouteInvalid = currentIntentObj?.hasSubOptions && currentSubRouteObj && (currentSubRouteObj as any).maxOrders !== undefined && selectedPackageOrders.length > (currentSubRouteObj as any).maxOrders;
+
+                        return (
+                          <div className="flex items-center gap-3">
+                            {isCurrentRouteInvalid && (
+                              <span className="text-[12px] text-rose-500 font-medium">当前路线订单数超限，请重新选择</span>
+                            )}
+                            <button 
+                              disabled={isCurrentRouteInvalid}
+                              onClick={() => {
+                                if ((currentSubRouteObj as any)?.isBag) {
+                                   setBoxOption('free_box');
+                                } else if ((currentSubRouteObj as any)?.requireNewBox) {
+                                   setBoxOption('new_box');
+                                }
+                                setFormActiveStep(2);
+                              }}
+                              className={`px-6 py-2 rounded-full text-[14px] font-bold transition-transform ${isCurrentRouteInvalid ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#ffd200] text-gray-900 active:scale-95'}`}
+                            >
+                              确认意向，下一步
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 ) : (
@@ -648,8 +767,8 @@ export function Flow20260708() {
                       <div className="space-y-3">
                         {[
                           { id: 'no_control', title: '不控制，我要全发', desc: '包裹内所有物品全部发出。' },
-                          { id: 'auto_remove', title: '控制到最近的档位（随机取出）', desc: '若满足不了，随机取出1-2单。' },
-                          { id: 'specify_remove', title: '控制到最近的档位（指定取出）', desc: '若满足不了，指定取出一个订单（付费服务）。' }
+                          { id: 'auto_remove', title: '控制到最近的档位（随机取出）', desc: '若满足不了，随机取出1-2单。', tag: '免费' },
+                          { id: 'specify_remove', title: '控制到最近的档位（指定取出）', desc: '若满足不了，指定取出一个订单。', tag: '付费' }
                         ].map(opt => {
                           const isSelected = weightControlOption === opt.id;
                           return (
@@ -663,12 +782,25 @@ export function Flow20260708() {
                                   {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"/>}
                                 </div>
                                 <div className="flex-1">
-                                  <div className={`font-bold text-[14px] ${isSelected ? 'text-blue-900' : 'text-gray-800'}`}>
+                                  <div className={`font-bold text-[14px] flex items-center gap-2 ${isSelected ? 'text-blue-900' : 'text-gray-800'}`}>
                                     {opt.title}
+                                    {opt.tag && (
+                                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider ${opt.tag === '免费' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-orange-100 text-orange-700 border border-orange-200'}`}>
+                                        {opt.tag}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-[12px] text-gray-500 mt-1">
                                     {opt.desc}
                                   </div>
+                                  {(opt.id === 'auto_remove' || opt.id === 'specify_remove') && (
+                                    <div className="mt-2 p-2 bg-amber-50/80 rounded text-[11px] text-amber-700 flex gap-1.5 items-start border border-amber-100">
+                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                      <div className="leading-relaxed">
+                                        <span className="font-bold">注意：</span>取出的商品将恢复为<span className="font-bold">入库状态</span>。若该商品已超出免费仓储期，在此期间将产生<span className="font-bold text-red-600">逾期仓储费</span>。
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -693,7 +825,7 @@ export function Flow20260708() {
                             </button>
                           )}
                           <div className="mt-3 text-[12px] text-red-600 leading-relaxed">
-                            <span className="font-bold">提示：</span>哪怕指定取出后，还是无法控制重量或体积，但是因为人工费已经产生，所以只能取出后封箱，跳档也没办法。
+                            <span className="font-bold">提示：</span>若指定取出后仍无法满足重量/体积限制，因已产生人工操作，包裹将直接封箱发货，可能无法避免运费跳档。
                           </div>
                         </div>
                       )}
@@ -703,7 +835,7 @@ export function Flow20260708() {
                           onClick={() => setFormActiveStep(4)}
                           className="bg-[#ffd200] text-gray-900 px-6 py-2 rounded-full text-[14px] font-bold active:scale-95 transition-transform"
                         >
-                          确认重量要求，下一步
+                          确认控制要求，下一步
                         </button>
                       </div>
                     </div>
@@ -909,9 +1041,9 @@ export function Flow20260708() {
                       <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden shrink-0">
                         <img src={order.image} alt="Product" className="w-full h-full object-cover" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-bold text-gray-800">入库编号: {order.id}</div>
-                        <div className="text-[12px] text-gray-500 mt-1 line-clamp-1">{order.title}</div>
+                        <div className="text-[12px] text-gray-500 mt-1 truncate">{order.title}</div>
                         <div className="text-[12px] text-gray-400 mt-1">重量: {order.weight}g</div>
                       </div>
                     </div>

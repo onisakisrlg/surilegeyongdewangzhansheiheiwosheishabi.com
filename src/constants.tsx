@@ -16,6 +16,26 @@ export const MOCK_PROJECTS: PrototypeProject[] = [
       {
         title: "设计说明",
         content: "1. 左侧APP端我的订单列表及发起打包交互。\n2. 右侧管理端展示最终仓库执行单的结构化信息。"
+      },
+      {
+        title: "步骤1：选择物流意向 (选项列表)",
+        content: "1. 体积重量取大值路线\n  - 蒲公英-顺丰国际\n  - 蒲公英-京东物流\n  - 顺丰杂货\n  - 顺丰饰品专线\n  - 顺丰衣物特快小包\n  - 顺丰娃娃专线\n  - 顺丰手办玩偶专线\n  - 中通杂货\n  - 申通杂货\n\n2. 纯重量路线 (不看体积)\n  - 【EMS-日本邮政】\n  - 【空运-日本邮政】\n  - 【海运-日本邮政】\n  - 【EPL小包裹-日本邮政】\n\n3. 特定路线 (专线打包)\n  - 衣服专线\n  - 玩偶专线\n  - 大件专线\n  - 奢侈品专线\n\n4. 我不知道，打包后再看看"
+      },
+      {
+        title: "步骤2：箱子选项",
+        content: "1. 尽量用免费旧纸箱\n2. 【付费】必须用全新纸箱（顺丰/京东国际等路线强制）\n3. 【付费】原箱打包不更换（适合本身带结实外箱的单件）\n4. 【免费】直接套快递袋发货（适合毛绒/衣服）"
+      },
+      {
+        title: "步骤3：控制重量/体积",
+        content: "1. 正常打包（不刻意控制）\n2. 控制总重量不超过（可设置克数）\n3. 取出指定入库单包裹（可选择）\n4. 取出最重的包裹\n5. 取出体积最大的包裹"
+      },
+      {
+        title: "步骤4：拆包要求",
+        content: "1. 不拆原包裹的快递纸箱\n2. 拆除原快递纸箱，保留商品原包装\n3. 极致减重：丢弃商品外包装/鞋盒等"
+      },
+      {
+        title: "步骤5：其他增值服务",
+        content: "1. 使用加厚气泡柱加固\n2. 拍照核验商品状态"
       }
     ]
   },
@@ -110,7 +130,9 @@ export const MOCK_PACKAGE_ORDERS = [
   { id: "S7-00042768", title: "名探偵コナン 江戸川コナン クリアファイル", platform: "煤炉", weight: 50, price: 400, image: "https://images.unsplash.com/photo-1512413914486-5d66ccb392ee?auto=format&fit=crop&w=300&q=80", color: "#e71f19" },
   { id: "S7-00042769", title: "ドラえもん のび太 フィギュア", platform: "骏河屋", weight: 120, price: 1100, image: "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?auto=format&fit=crop&w=300&q=80", color: "#005baa" },
   { id: "S7-00042770", title: "NARUTO ナルト うずまきナルト クッション", platform: "乐天市场", weight: 400, price: 2800, image: "https://images.unsplash.com/photo-1563261629-9e8c3b9b4f7f?auto=format&fit=crop&w=300&q=80", color: "#bf0000" },
-  { id: "S7-00042771", title: "銀魂 坂田銀時 コスプレ衣装", platform: "雅虎拍卖", weight: 800, price: 6500, image: "https://images.unsplash.com/photo-1596489379659-1972f10b777a?auto=format&fit=crop&w=300&q=80", color: "#fdcd04" }
+  { id: "S7-00042771", title: "銀魂 坂田銀時 コスプレ衣装", platform: "雅虎拍卖", weight: 800, price: 6500, image: "https://images.unsplash.com/photo-1596489379659-1972f10b777a?auto=format&fit=crop&w=300&q=80", color: "#fdcd04" },
+  { id: "S7-00042772", title: "ジョジョの奇妙な冒険 空条承太郎 フィギュア", platform: "煤炉", weight: 450, price: 5500, image: "https://images.unsplash.com/photo-1608889175123-8ee362201f81?auto=format&fit=crop&w=300&q=80", color: "#e71f19" },
+  { id: "S7-00042773", title: "HUNTER×HUNTER キルア アクリルキーホルダー", platform: "骏河屋", weight: 25, price: 850, image: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=300&q=80", color: "#005baa" }
 ];
 
 export const ADDONS_LIST = [
