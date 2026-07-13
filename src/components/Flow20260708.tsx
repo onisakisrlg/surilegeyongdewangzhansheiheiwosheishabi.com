@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Check, Copy, Search, Filter, AlertTriangle, Package, Info, Edit2 } from 'lucide-react';
+import { ChevronLeft, Check, Copy, Search, Filter, AlertTriangle, Package, Info, Edit2, Plus, X } from 'lucide-react';
 import { MOCK_PACKAGE_ORDERS } from '../constants';
 
 const LOGISTICS_INTENTS = [
@@ -182,6 +182,11 @@ export function Flow20260708() {
   const [packagingOption, setPackagingOption] = useState<string>('remove_shipping');
   const [valueAddedServices, setValueAddedServices] = useState<string[]>([]);
   
+  const [orderServices, setOrderServices] = useState<Record<string, { service: string, remark: string }>>({});
+  const [showOrderServiceModal, setShowOrderServiceModal] = useState<string | null>(null);
+  const [editingServiceType, setEditingServiceType] = useState<string>('单件丢弃');
+  const [editingServiceRemark, setEditingServiceRemark] = useState<string>('');
+  
   const [formActiveStep, setFormActiveStep] = useState(1);
   const [boxConfirmModal, setBoxConfirmModal] = useState<{show: boolean, targetBox: string, targetBoxTitle: string, routeTitle: string, isBagConflict?: boolean} | null>(null);
   
@@ -211,9 +216,24 @@ export function Flow20260708() {
   }, 0);
 
   const toggleOrder = (id: string) => {
-    setSelectedPackageOrders(prev => 
-      prev.includes(id) ? prev.filter(orderId => orderId !== id) : [...prev, id]
-    );
+    setSelectedPackageOrders(prev => {
+      const next = prev.includes(id) ? prev.filter(orderId => orderId !== id) : [...prev, id];
+      if (!next.includes(id) && orderServices[id]) {
+        // If unselected, maybe remove the service? The user said "if the user has an additional service for an order, give them a button when they check the order". So if they uncheck, we could either keep or clear it. Let's keep it in state, it just won't be visible/used.
+      }
+      return next;
+    });
+  };
+
+  const openOrderServiceModal = (orderId: string) => {
+    if (orderServices[orderId]) {
+      setEditingServiceType(orderServices[orderId].service);
+      setEditingServiceRemark(orderServices[orderId].remark);
+    } else {
+      setEditingServiceType('单件丢弃');
+      setEditingServiceRemark('');
+    }
+    setShowOrderServiceModal(orderId);
   };
 
   const AdminView = () => {
@@ -389,7 +409,35 @@ export function Flow20260708() {
                         </div>
                         <div className="flex flex-col mt-auto">
                           <span className="text-[11px] text-gray-400">重量: {order.weight}g</span>
-                          <span className="text-[15px] text-[#d1586e] font-medium mt-0.5">{order.price} 円</span>
+                          <div className="flex items-center justify-between mt-0.5">
+                            <span className="text-[15px] text-[#d1586e] font-medium">{order.price} 円</span>
+                            {isSelected && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openOrderServiceModal(order.id);
+                                }}
+                                className="flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-100 active:bg-blue-100 transition-colors"
+                              >
+                                {orderServices[order.id] ? (
+                                  <>
+                                    <Edit2 className="w-3 h-3" />
+                                    {orderServices[order.id].service}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="w-3 h-3" />
+                                    附加项
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          {isSelected && orderServices[order.id] && orderServices[order.id].remark && (
+                            <div className="mt-1.5 text-[11px] text-blue-800 bg-blue-50/50 p-1.5 rounded border border-blue-100/50 break-all leading-snug">
+                              备注: {orderServices[order.id].remark}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1010,6 +1058,75 @@ export function Flow20260708() {
                 >
                   取消，继续使用{boxConfirmModal.isBagConflict ? '袋装' : '新箱'}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Order Service Modal */}
+        {showOrderServiceModal && (
+          <div className="absolute inset-0 bg-black/50 z-50 flex flex-col justify-end">
+            <div className="bg-white rounded-t-xl w-full flex flex-col animate-in slide-in-from-bottom-full duration-300">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="font-bold text-[16px]">选择附加项</h3>
+                <button onClick={() => setShowOrderServiceModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div>
+                  <div className="text-[13px] text-gray-700 font-medium mb-2">附加项服务</div>
+                  <div className="flex flex-wrap gap-2">
+                    {['单件丢弃', '单件清点', '单件拍照'].map(srv => (
+                      <button
+                        key={srv}
+                        onClick={() => setEditingServiceType(srv)}
+                        className={`px-3 py-1.5 text-[13px] rounded-full border ${editingServiceType === srv ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-gray-200 text-gray-600'}`}
+                      >
+                        {srv}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[13px] text-gray-700 font-medium mb-2">备注</div>
+                  <textarea
+                    value={editingServiceRemark}
+                    onChange={(e) => setEditingServiceRemark(e.target.value)}
+                    placeholder="请输入备注，例如：丢弃书"
+                    className="w-full h-20 p-2 text-[13px] border border-gray-200 rounded-lg resize-none outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      if (orderServices[showOrderServiceModal]) {
+                        const newServices = { ...orderServices };
+                        delete newServices[showOrderServiceModal];
+                        setOrderServices(newServices);
+                      }
+                      setShowOrderServiceModal(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-full border border-gray-300 text-gray-700 text-[14px] font-medium"
+                  >
+                    清除附加项
+                  </button>
+                  <button
+                    onClick={() => {
+                      setOrderServices(prev => ({
+                        ...prev,
+                        [showOrderServiceModal]: {
+                          service: editingServiceType,
+                          remark: editingServiceRemark
+                        }
+                      }));
+                      setShowOrderServiceModal(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-full bg-[#ffd200] text-gray-900 text-[14px] font-bold"
+                  >
+                    保存
+                  </button>
+                </div>
               </div>
             </div>
           </div>
