@@ -709,6 +709,8 @@ export function Flow20260708() {
   const [appStep, setAppStep] = useState<'list' | 'form'>('list');
   const [selectedPackageOrders, setSelectedPackageOrders] = useState<string[]>([]);
   const [selectedPackageAddons, setSelectedPackageAddons] = useState<Record<string, any>>({});
+  const [orderSplitConfig, setOrderSplitConfig] = useState<Record<string, { splitCount: number; remark: string }>>({});
+  const [showSplitModal, setShowSplitModal] = useState<string | null>(null);
   
   const [logisticsIntent, setLogisticsIntent] = useState<string>('pg_route');
   const [specificRoute, setSpecificRoute] = useState<string>('pg_sf');
@@ -970,6 +972,64 @@ export function Flow20260708() {
             {/* Divider */}
             <div className="h-px bg-gray-100" />
 
+            {/* 单订单拆分指令 (针对单个包裹订单拆分) */}
+            {(() => {
+              const splitOrders = selectedPackageOrders.filter(id => orderSplitConfig[id]);
+              if (splitOrders.length === 0) return null;
+
+              return (
+                <>
+                  <div className="flex gap-4 items-start">
+                    <div className="w-32 text-[13px] font-bold text-gray-600 shrink-0 mt-1">
+                      单订单拆分执行单
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      {splitOrders.map(orderId => {
+                        const orderObj = MOCK_PACKAGE_ORDERS.find(o => o.id === orderId);
+                        const config = orderSplitConfig[orderId];
+                        return (
+                          <div key={orderId} className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-3 text-[13px] text-amber-950 shadow-sm">
+                            <div className="flex items-center gap-2 border-b border-amber-200/50 pb-2">
+                              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span className="font-bold text-[14px] text-amber-900">
+                                ⚠️ 仓库执行动作：单订单拆分拣货指令
+                              </span>
+                            </div>
+
+                            <div className="space-y-1 text-gray-800">
+                              <div>
+                                <span className="font-semibold text-gray-500">被拆分包裹:</span> <span className="font-medium text-gray-900">{orderObj?.title} ({orderId})</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold text-gray-500">要求拆分数:</span> <span className="font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded font-mono text-[12px]">
+                                  拆分为 {config.splitCount} 个独立的 LO 出库订单
+                                </span>
+                              </div>
+                              <div className="mt-2.5">
+                                <span className="font-bold text-gray-900 block border-l-2 border-amber-500 pl-1.5 mb-1 text-[12px]">
+                                  📢 客户同步操作备注 (此要求同步影响这 {config.splitCount} 个分箱 LO 子单)：
+                                </span>
+                                <div className="bg-white border border-amber-200 p-2.5 rounded-lg text-gray-900 font-bold font-mono text-[13px] italic shadow-inner">
+                                  💬 "{config.remark || '左上角的徽章'}"
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-white/60 p-2.5 rounded border border-amber-100 text-[11px] text-gray-500 leading-relaxed">
+                              <span className="font-bold text-gray-700 block mb-0.5">💡 仓库打包指引：</span>
+                              该入库单已申请分箱拆发。系统将自动生成 <b>{config.splitCount} 个 LO 出库标签</b>。
+                              由于此备注同时影响这 {config.splitCount} 个 LO 子单，打包人员需将 <b>"{config.remark || '左上角的徽章'}"</b> 的指示对每一个拆分出的 LO 件进行对应核对或配套加固操作。
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="h-px bg-gray-100" />
+                </>
+              );
+            })()}
+
             {/* 商品级单独附加指令 (针对具体入库编号) */}
             <div className="flex gap-4 items-start">
               <div className="w-32 text-[13px] font-bold text-gray-600 shrink-0 mt-1">商品级单独附加指令</div>
@@ -1114,30 +1174,90 @@ export function Flow20260708() {
                         </div>
                         <div className="flex flex-col mt-auto">
                           <span className="text-[11px] text-gray-400">重量: {order.weight}g</span>
-                          <div className="flex items-center justify-between mt-0.5">
-                            <span className="text-[15px] text-[#d1586e] font-medium">{order.price} 円</span>
+                          <div className="flex items-center justify-between mt-0.5 gap-1.5">
+                            <span className="text-[14px] text-[#d1586e] font-bold shrink-0">{order.price} 円</span>
                             {isSelected && (
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openOrderServiceModal(order.id);
-                                }}
-                                className="flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-100 active:bg-blue-100 transition-colors"
-                              >
-                                {orderServices[order.id] && orderServices[order.id].length > 0 ? (
-                                  <>
-                                    <Edit2 className="w-3 h-3" />
-                                    已选 {orderServices[order.id].length} 项附加项
-                                  </>
-                                ) : (
-                                  <>
-                                    <Plus className="w-3 h-3" />
-                                    附加项
-                                  </>
-                                )}
-                              </button>
+                              <div className="flex gap-1">
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openOrderServiceModal(order.id);
+                                  }}
+                                  className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 active:bg-blue-100 transition-colors shrink-0"
+                                >
+                                  {orderServices[order.id] && orderServices[order.id].length > 0 ? (
+                                    <>
+                                      <Edit2 className="w-2.5 h-2.5" />
+                                      附加项 ({orderServices[order.id].length})
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plus className="w-2.5 h-2.5" />
+                                      附加项
+                                    </>
+                                  )}
+                                </button>
+                                
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (selectedPackageOrders.length === 1) {
+                                      setShowSplitModal(order.id);
+                                    }
+                                  }}
+                                  disabled={selectedPackageOrders.length > 1}
+                                  className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all shrink-0 ${
+                                    selectedPackageOrders.length === 1 
+                                      ? 'text-amber-700 bg-amber-50 border-amber-200 active:bg-amber-100' 
+                                      : 'text-gray-300 bg-gray-50 border-gray-100 cursor-not-allowed'
+                                  }`}
+                                  title={selectedPackageOrders.length > 1 ? "仅支持单订单拆分" : "配置拆分需求"}
+                                >
+                                  <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
+                                  {orderSplitConfig[order.id] ? '已设拆分' : '拆分订单'}
+                                </button>
+                              </div>
                             )}
                           </div>
+
+                          {/* Split order configuration visualization */}
+                          {isSelected && orderSplitConfig[order.id] && (
+                            <div className="mt-1.5 bg-amber-50 border border-amber-200 p-2 rounded-lg text-[11px] text-amber-900 space-y-1">
+                              <div className="flex items-center justify-between font-bold text-amber-800 text-[10px] pb-1 border-b border-amber-200/40">
+                                <span className="flex items-center gap-1">
+                                  <Package className="w-3 h-3 text-amber-600" />
+                                  已设定拆分为 {orderSplitConfig[order.id].splitCount} 个出库子单
+                                </span>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOrderSplitConfig(prev => {
+                                      const next = { ...prev };
+                                      delete next[order.id];
+                                      return next;
+                                    });
+                                  }}
+                                  className="text-red-500 hover:text-red-700 hover:underline text-[9px]"
+                                >
+                                  撤销
+                                </button>
+                              </div>
+                              <div className="text-[10px] text-gray-700 leading-normal">
+                                <span className="font-semibold text-gray-500">同步备注:</span> <span className="text-gray-900 font-medium">"{orderSplitConfig[order.id].remark || '左上角的徽章'}"</span>
+                              </div>
+                              
+                              {/* Visual Sub-LO packages */}
+                              <div className="pt-1 grid grid-cols-1 gap-1">
+                                {Array.from({ length: orderSplitConfig[order.id].splitCount }).map((_, sIdx) => (
+                                  <div key={sIdx} className="flex justify-between items-center text-[9px] text-gray-500 bg-white/60 px-1.5 py-0.5 rounded border border-amber-100/30">
+                                    <span className="font-mono text-gray-600">📦 LO-{order.id}-S{sIdx+1}</span>
+                                    <span className="text-amber-800 font-medium truncate max-w-[110px] italic">📝 同步备注</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           {isSelected && orderServices[order.id] && orderServices[order.id].length > 0 && (
                             <div className="mt-1.5 bg-blue-50/30 border border-blue-100 p-2 rounded-lg text-[11px] text-blue-900 space-y-1">
                               <div className="font-bold border-b border-blue-100/50 pb-1 mb-1 text-[10px] text-blue-800">已选商品级附加项:</div>
@@ -1175,26 +1295,63 @@ export function Flow20260708() {
                </button>
             </div>
             
-            <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-30 pb-safe">
+            <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-30 pb-safe shadow-lg">
+              {/* Split selection status warning/info panel */}
+              <div className="px-4 py-1.5 flex items-center justify-between text-[11px] bg-amber-50 text-amber-800 border-b border-amber-100/50">
+                {selectedPackageOrders.length === 1 ? (
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5 text-green-600" /> 
+                    已选 1 个包裹，可进行<b>单订单拆分</b>操作
+                  </span>
+                ) : selectedPackageOrders.length > 1 ? (
+                  <span className="flex items-center gap-1 text-red-600 font-medium">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" /> 
+                    已选 {selectedPackageOrders.length} 个包裹。<b>多选状态下暂不支持拆分。</b>
+                  </span>
+                ) : (
+                  <span className="text-gray-400">请勾选需要处理的包裹订单</span>
+                )}
+              </div>
+
               <div className="px-4 py-2 flex items-center justify-between">
                 <span className="text-[13px] font-medium text-gray-800">已选总金额: <span className="font-mono">{selectedTotalAmount}</span> 円</span>
                 <span className="text-[13px] font-medium text-gray-800">已选总重: <span className="font-mono">{selectedTotalWeight}</span>克</span>
               </div>
-              <div className="px-4 py-2 flex items-center justify-between gap-3">
+              <div className="px-4 py-2.5 flex items-center justify-between gap-2">
                 <button 
                   onClick={() => setSelectedPackageOrders([])}
-                  className="w-20 py-2 rounded-full border border-[#1677ff] text-[#1677ff] text-[14px] font-medium active:bg-blue-50 transition-colors"
+                  className="px-3.5 py-2 rounded-full border border-gray-300 text-gray-600 text-[13px] font-medium active:bg-blue-50 transition-colors"
                 >取消</button>
-                <div className="flex gap-2.5 flex-1 justify-end">
+                
+                <div className="flex gap-1.5 flex-1 justify-end">
+                  {/* Split Button */}
+                  <button 
+                    onClick={() => {
+                      if (selectedPackageOrders.length === 1) {
+                        setShowSplitModal(selectedPackageOrders[0]);
+                      }
+                    }}
+                    disabled={selectedPackageOrders.length !== 1}
+                    className={`px-3 py-2 rounded-full text-[13px] font-bold flex items-center gap-1 transition-all ${
+                      selectedPackageOrders.length === 1 
+                        ? 'bg-amber-50 text-amber-800 border border-amber-200 active:bg-amber-100' 
+                        : 'bg-gray-50 text-gray-300 border border-gray-100 cursor-not-allowed opacity-50'
+                    }`}
+                    title={selectedPackageOrders.length > 1 ? "仅支持单订单拆分" : "配置拆分要求"}
+                  >
+                    <Plus className="w-3.5 h-3.5 text-amber-600" />
+                    拆分
+                  </button>
+
                   <button 
                     onClick={() => setAppStep('form')}
                     disabled={selectedPackageOrders.length === 0}
-                    className={`w-24 py-2 rounded-full text-[14px] font-medium transition-transform ${selectedPackageOrders.length > 0 ? 'bg-[#ffd200] text-gray-900 active:scale-95' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                  >发起直邮</button>
+                    className={`w-20 py-2 rounded-full text-[13px] font-bold transition-transform ${selectedPackageOrders.length > 0 ? 'bg-[#ffd200] text-gray-900 active:scale-95' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                  >直邮</button>
                   <button 
                     disabled={selectedPackageOrders.length === 0}
-                    className={`w-24 py-2 rounded-full text-[14px] font-medium transition-transform ${selectedPackageOrders.length > 0 ? 'bg-[#ffd200] text-gray-900 active:scale-95' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                  >发起拼邮</button>
+                    className={`w-20 py-2 rounded-full text-[13px] font-bold transition-transform ${selectedPackageOrders.length > 0 ? 'bg-[#ffd200] text-gray-900 active:scale-95' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                  >拼邮</button>
                 </div>
               </div>
             </div>
@@ -2398,6 +2555,178 @@ export function Flow20260708() {
                       <Check className="w-4 h-4" /> 确定保存 ({tempOrderAddons.length} 项)
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Order Split Modal */}
+        {showSplitModal && (() => {
+          const order = MOCK_PACKAGE_ORDERS.find(o => o.id === showSplitModal);
+          if (!order) return null;
+
+          return (
+            <div className="absolute inset-0 bg-black/60 z-50 flex flex-col justify-end">
+              <div 
+                className="bg-white rounded-t-2xl w-full max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-full duration-300 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-amber-50/50 rounded-t-2xl">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-amber-600" />
+                    <div>
+                      <h3 className="font-bold text-[15px] text-gray-900">配置单订单拆分方案</h3>
+                      <p className="text-[10px] text-gray-400">仅支持单个包裹拆分为多个出库子单</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setShowSplitModal(null)} 
+                    className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 active:scale-90 transition-transform"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {/* Selected Item Info */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex gap-3">
+                    <div className="w-14 h-14 rounded overflow-hidden shrink-0 border border-gray-200">
+                      <img src={order.image} alt={order.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] text-gray-400 font-mono">入库单号: {order.id}</div>
+                      <div className="text-[12px] font-bold text-gray-800 truncate">{order.title}</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">重量: {order.weight}g | 价值: {order.price}円</div>
+                    </div>
+                  </div>
+
+                  {/* Split count select */}
+                  <div className="space-y-2">
+                    <label className="text-[12px] font-bold text-gray-700 block">
+                      1. 拆分成多个 LO 出库订单数（件数）：
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = Math.max(2, (orderSplitConfig[showSplitModal]?.splitCount || 3) - 1);
+                          setOrderSplitConfig(prev => ({
+                            ...prev,
+                            [showSplitModal]: { ...prev[showSplitModal] || { remark: '' }, splitCount: val }
+                          }));
+                        }}
+                        className="w-10 h-10 rounded-lg border border-gray-300 bg-white flex items-center justify-center text-[18px] font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-transform"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <div className="flex-1 text-center bg-gray-50 border border-gray-200 rounded-lg py-2 font-mono font-bold text-[15px] text-amber-700">
+                        {orderSplitConfig[showSplitModal]?.splitCount || 3} 个出库 LO 子单
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = Math.min(10, (orderSplitConfig[showSplitModal]?.splitCount || 3) + 1);
+                          setOrderSplitConfig(prev => ({
+                            ...prev,
+                            [showSplitModal]: { ...prev[showSplitModal] || { remark: '' }, splitCount: val }
+                          }));
+                        }}
+                        className="w-10 h-10 rounded-lg border border-gray-300 bg-white flex items-center justify-center text-[18px] font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-transform"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <span className="text-[10px] text-gray-400 block">
+                      ⚠️ 拆分订单数量范围：2 ~ 10。默认拆分为 3 个。
+                    </span>
+                  </div>
+
+                  {/* Split remark */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[12px] font-bold text-gray-700 block">
+                        2. 拆分操作备注栏（指定具体要求）：
+                      </label>
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">必填</span>
+                    </div>
+                    
+                    <textarea
+                      placeholder="例：左上角的徽章。或者输入: 请将包裹内的立牌、徽章、海报拆分成3份..."
+                      value={orderSplitConfig[showSplitModal]?.remark || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setOrderSplitConfig(prev => ({
+                          ...prev,
+                          [showSplitModal]: { ...prev[showSplitModal] || { splitCount: 3 }, remark: val }
+                        }));
+                      }}
+                      className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-[12px] h-20 focus:border-amber-400 focus:bg-white focus:outline-none transition-colors"
+                    />
+                    
+                    <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-2.5 space-y-1 text-[11px] text-amber-900 leading-relaxed">
+                      <div className="font-bold flex items-center gap-1">
+                        <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        什么是同步备注机制？
+                      </div>
+                      <p className="text-[10px] text-gray-600">
+                        当该包裹拆分为 <span className="font-bold font-mono text-blue-600">{orderSplitConfig[showSplitModal]?.splitCount || 3}</span> 个 LO 出库订单时，此备注将<b>同时且自动附加到全部 {orderSplitConfig[showSplitModal]?.splitCount || 3} 个出库单中</b>，使打包员在对任何一个拆分子件进行后续加固等操作时，都能获得统一指示。
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Flow Simulation Visualization */}
+                  <div className="space-y-2 border-t border-gray-100 pt-3">
+                    <span className="text-[11px] font-bold text-gray-500">拆分后出库 LO 运单预览：</span>
+                    <div className="space-y-1.5">
+                      {Array.from({ length: orderSplitConfig[showSplitModal]?.splitCount || 3 }).map((_, sIdx) => (
+                        <div key={sIdx} className="bg-amber-50/20 border border-amber-100/50 rounded-lg p-2 flex items-center justify-between text-[11px] font-mono">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <span className="font-bold text-gray-700">LO-{order.id}-S{sIdx+1}</span>
+                          </div>
+                          <span className="text-gray-500 truncate max-w-[150px] font-sans">
+                            📝 {orderSplitConfig[showSplitModal]?.remark ? `"${orderSplitConfig[showSplitModal].remark}"` : '(等待录入备注...)'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="p-4 border-t border-gray-100 bg-white flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOrderSplitConfig(prev => {
+                        const next = { ...prev };
+                        delete next[showSplitModal];
+                        return next;
+                      });
+                      setShowSplitModal(null);
+                    }}
+                    className="w-1/3 py-2.5 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 active:scale-95 transition-transform text-[13px] font-medium"
+                  >
+                    取消拆分
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!orderSplitConfig[showSplitModal]?.remark) {
+                        setOrderSplitConfig(prev => ({
+                          ...prev,
+                          [showSplitModal]: { ...prev[showSplitModal] || { splitCount: 3 }, remark: '左上角的徽章' }
+                        }));
+                      }
+                      setShowSplitModal(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-full bg-amber-500 text-gray-900 text-[13px] font-bold hover:bg-amber-600 active:scale-95 transition-transform flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <Check className="w-4 h-4" /> 确定拆分方案
+                  </button>
                 </div>
               </div>
             </div>
