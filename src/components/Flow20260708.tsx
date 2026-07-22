@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Check, Copy, Search, Filter, AlertTriangle, Package, Info, Edit2, Plus, X, Trash2, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Check, Copy, Search, Filter, AlertTriangle, Package, Info, Edit2, Plus, X, Trash2, Minus } from 'lucide-react';
 import { MOCK_PACKAGE_ORDERS } from '../constants';
 
 const LOGISTICS_INTENTS = [
@@ -10,6 +10,8 @@ const LOGISTICS_INTENTS = [
     adminTags: ['蒲公英', '人工预审', '尽可能紧凑'],
     adminIntent: '蒲公英路线',
     hasSubOptions: true,
+    displayOnlySubOptions: true,
+    requireNewBox: true,
     subOptions: [
       {
         id: 'pg_sf',
@@ -18,6 +20,7 @@ const LOGISTICS_INTENTS = [
         adminTags: ['【蒲公英】', '顺丰', '强制新箱'],
         adminIntent: '蒲公英-顺丰国际',
         requireNewBox: true,
+        hasZeroOutDiscount: true,
       },
       {
         id: 'pg_jd',
@@ -30,75 +33,151 @@ const LOGISTICS_INTENTS = [
     ]
   },
   { 
-    id: 'vol_weight_non_pg', 
-    title: '体积重量取大值 (常规杂货)', 
+    id: 'vol_div_5000', 
+    title: '体积重量取大值 (常规杂货) 除5000', 
     desc: '涵盖各类专线杂货路线。发此路线需兼顾体积与实重，打包员会尽量压缩体积。',
-    adminTags: ['常规纸箱', '严格控制体积', '尽可能紧凑'],
-    adminIntent: '控制体积重路线',
+    adminTags: ['常规纸箱', '严格控制体积', '尽可能紧凑', '体积重/5000'],
+    adminIntent: '体积重除5000',
     hasSubOptions: true,
+    displayOnlySubOptions: true,
+    showVolCalcExample: '5000',
+    subOptions: [
+      {
+        id: 'pg_hk_macau',
+        title: '品类香港／澳门线',
+        desc: '香港/澳门专属物流线路。',
+        adminTags: ['香港/澳门'],
+        adminIntent: '品类香港／澳门线',
+        requireNewBox: false,
+      },
+      {
+        id: 'pg_ups_hk_macau',
+        title: '品类UPS香港／澳门线',
+        desc: 'UPS香港/澳门专属物流线路。',
+        adminTags: ['UPS', '香港/澳门'],
+        adminIntent: '品类UPS香港／澳门线',
+        requireNewBox: false,
+      }
+    ]
+  },
+  { 
+    id: 'vol_div_6000', 
+    title: '体积重量取大值 (常规杂货) 除6000', 
+    desc: '涵盖各类专线杂货路线。发此路线需兼顾体积与实重，打包员会尽量压缩体积。',
+    adminTags: ['常规纸箱', '严格控制体积', '尽可能紧凑', '体积重/6000'],
+    adminIntent: '体积重除6000',
+    hasSubOptions: true,
+    showVolCalcExample: '6000',
     subOptions: [
       {
         id: 'sf_za',
         title: '顺丰杂货',
-        desc: '常规包装。',
+        desc: '3kg以下，每箱商品金额2000元以内。',
         adminTags: ['顺丰', '杂货'],
         adminIntent: '顺丰杂货',
         requireNewBox: false,
-        maxOrders: 20
-      },
-      {
-        id: 'sf_shipin',
-        title: '顺丰饰品专线',
-        desc: '适合小包裹。',
-        adminTags: ['顺丰', '饰品'],
-        adminIntent: '顺丰饰品专线',
-        requireNewBox: false,
-        maxOrders: 20
-      },
-      {
-        id: 'sf_clothes',
-        title: '顺丰衣物特快小包',
-        desc: '适合衣物。',
-        adminTags: ['顺丰', '衣物特快小包'],
-        adminIntent: '顺丰衣物特快小包',
-        requireNewBox: false,
-        maxOrders: 20
-      },
-      {
-        id: 'sf_dolls',
-        title: '顺丰娃娃专线',
-        desc: '适合娃娃及相关配件。',
-        adminTags: ['顺丰', '娃娃专线'],
-        adminIntent: '顺丰娃娃专线',
-        requireNewBox: false,
-        maxOrders: 20
-      },
-      {
-        id: 'sf_shouban',
-        title: '顺丰手办玩偶专线',
-        desc: '适合手办等需保护物品。',
-        adminTags: ['顺丰', '手办玩偶'],
-        adminIntent: '顺丰手办玩偶专线',
-        requireNewBox: false,
-        maxOrders: 20
-      },
-      {
-        id: 'zt_za',
-        title: '中通杂货',
-        desc: '高性价比专线。',
-        adminTags: ['中通', '杂货'],
-        adminIntent: '中通杂货',
-        requireNewBox: false,
-        maxOrders: 20
+        maxOrders: 20,
+        hasZeroOutDiscount: true,
       },
       {
         id: 'st_za',
         title: '申通杂货',
-        desc: '经济实惠专线。',
+        desc: '3kg以下，每箱商品金额2000元以内。',
         adminTags: ['申通', '杂货'],
         adminIntent: '申通杂货',
         requireNewBox: false,
-        maxOrders: 20
+        maxOrders: 20,
+        hasZeroOutDiscount: true,
+        billingStepTip: '1000克以上100克一档',
+      },
+      {
+        id: 'bag_jewelry',
+        title: '包包首饰专线',
+        desc: '适用包包、首饰等商品。',
+        adminTags: ['包包首饰'],
+        adminIntent: '包包首饰专线',
+        requireNewBox: false,
+      },
+      {
+        id: 'sf_hk_macau',
+        title: '顺丰香港澳门',
+        desc: '顺丰香港、澳门专属线路。',
+        adminTags: ['顺丰', '香港/澳门'],
+        adminIntent: '顺丰香港澳门',
+        requireNewBox: false,
+      },
+      {
+        id: 'other_4kg',
+        title: '其他专线 (4kg起步)',
+        desc: '包含汽配、鱼竿、高尔夫、化妆品、保健品、顺丰大件衣服等。',
+        adminTags: ['其他4kg起步专线'],
+        adminIntent: '其他专线 (4kg起步)',
+        requireNewBox: false,
+        billingStepTip: '4kg起步',
+      }
+    ]
+  },
+  { 
+    id: 'vol_div_12000', 
+    title: '体积重量取大值 (常规杂货) 除12000', 
+    desc: '涵盖各类专线杂货路线。发此路线需兼顾体积与实重，打包员会尽量压缩体积。',
+    adminTags: ['常规纸箱', '严格控制体积', '尽可能紧凑', '体积重/12000'],
+    adminIntent: '体积重除12000',
+    hasSubOptions: true,
+    showVolCalcExample: '12000',
+    subOptions: [
+      {
+        id: 'zt_za',
+        title: '中通杂货',
+        desc: '3kg以下，每箱商品金额2000元以内。',
+        adminTags: ['中通', '杂货'],
+        adminIntent: '中通杂货',
+        requireNewBox: false,
+        maxOrders: 20,
+        hasZeroOutDiscount: true,
+      },
+      {
+        id: 'sf_figure_doll',
+        title: '顺丰手办玩偶',
+        desc: '每箱商品金额2000元以内。',
+        adminTags: ['顺丰', '手办玩偶'],
+        adminIntent: '顺丰手办玩偶',
+        requireNewBox: false,
+        maxOrders: 20,
+        hasZeroOutDiscount: true,
+      },
+      {
+        id: 'anime_merch_line',
+        title: '动漫周边专线',
+        desc: '适用动漫周边商品。',
+        adminTags: ['动漫周边'],
+        adminIntent: '动漫周边专线',
+        requireNewBox: false,
+      },
+      {
+        id: 'anime_merch_cd_line',
+        title: '动漫周边（含CD）专线',
+        desc: '适用含CD的动漫周边。',
+        adminTags: ['动漫周边', 'CD'],
+        adminIntent: '动漫周边（含CD）专线',
+        requireNewBox: false,
+      },
+      {
+        id: 'helmet_line',
+        title: '头盔专线',
+        desc: '适用头盔类商品。',
+        adminTags: ['头盔'],
+        adminIntent: '头盔专线',
+        requireNewBox: false,
+      },
+      {
+        id: 'other_4kg_12000',
+        title: '其他专线 (4kg起步)',
+        desc: '包含衣服、鞋子、玩偶手办模型、相纸/拍立得、CD、运动用具、数码、渔轮、时尚、高级电脑配件等。',
+        adminTags: ['其他4kg起步专线'],
+        adminIntent: '其他专线 (4kg起步)',
+        requireNewBox: false,
+        billingStepTip: '4kg起步',
       }
     ]
   },
@@ -116,6 +195,8 @@ const LOGISTICS_INTENTS = [
     adminTags: [],
     adminIntent: '特定路线',
     hasSubOptions: true,
+    displayOnlySubOptions: true,
+    isBag: true,
     subOptions: [
       {
         id: 'clothes',
@@ -133,23 +214,8 @@ const LOGISTICS_INTENTS = [
         adminTags: ['【袋装】', '禁用纸箱', '玩偶专线'],
         adminIntent: '玩偶专线',
         isDanger: true,
-        isBag: true
-      },
-      {
-        id: 'large_item',
-        title: '大件专线',
-        desc: '【超大体积】适用于单件超大商品，将采用特殊大件打包标准。',
-        adminTags: ['【大件打包】', '特定专线', '常规纸箱/异形'],
-        adminIntent: '大件专线',
-        isDanger: false
-      },
-      {
-        id: 'luxury',
-        title: '奢侈品专线',
-        desc: '【高价值品】必须使用防盗胶带、高级加固及特定纸箱。',
-        adminTags: ['【高价值加固】', '防盗封箱', '奢侈品专线'],
-        adminIntent: '奢侈品专线',
-        isDanger: false
+        isBag: true,
+        hasZeroOutDiscount: true,
       }
     ]
   },
@@ -274,6 +340,10 @@ export interface SelectedOrderAddon {
   addonId: string;
   qty: number;
   remark: string;
+  annotation?: {
+    type: 'product' | 'intake';
+    markers: { x: number, y: number }[];
+  };
 }
 
 export const ORDER_ADDONS: OrderAddon[] = [
@@ -705,6 +775,11 @@ export const ORDER_ADDONS: OrderAddon[] = [
   }
 ];
 
+export const WEIGHT_OPTIONS = [
+  500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 
+  2500, 3000, 3500, 4000, 4500, 5000, 6000, 7000, 8000, 9000, 10000
+];
+
 export function Flow20260708() {
   const [appStep, setAppStep] = useState<'list' | 'form'>('list');
   const [selectedPackageOrders, setSelectedPackageOrders] = useState<string[]>([]);
@@ -721,8 +796,10 @@ export function Flow20260708() {
   const [isBoxDropdownOpen, setIsBoxDropdownOpen] = useState<boolean>(false);
   
   const [weightControlOption, setWeightControlOption] = useState<string>('no_control');
-  const [specifiedRemoveOrder, setSpecifiedRemoveOrder] = useState<string | null>(null);
+  const [specifiedRemoveOrders, setSpecifiedRemoveOrders] = useState<string[]>([]);
   const [showOrderSelectModal, setShowOrderSelectModal] = useState<boolean>(false);
+  const [autoRemoveWeightLimit, setAutoRemoveWeightLimit] = useState<number>(1100);
+  const [isWeightDropdownOpen, setIsWeightDropdownOpen] = useState<boolean>(false);
   const [packagingOption, setPackagingOption] = useState<string>('remove_shipping');
   const [valueAddedServices, setValueAddedServices] = useState<string[]>([]);
   
@@ -730,9 +807,11 @@ export function Flow20260708() {
   const [showOrderServiceModal, setShowOrderServiceModal] = useState<string | null>(null);
   const [activeModalCategory, setActiveModalCategory] = useState<string>('商品加固');
   const [tempOrderAddons, setTempOrderAddons] = useState<SelectedOrderAddon[]>([]);
+  const [showAnnotationModal, setShowAnnotationModal] = useState<{addonId: string, orderId: string, imageType: 'product' | 'intake', markers: {x: number, y: number}[]} | null>(null);
   
   const [formActiveStep, setFormActiveStep] = useState(1);
   const [boxConfirmModal, setBoxConfirmModal] = useState<{show: boolean, targetBox: string, targetBoxTitle: string, routeTitle: string, isBagConflict?: boolean} | null>(null);
+  const [showVolCalcModal, setShowVolCalcModal] = useState<string | null>(null);
   
   const step2Ref = useRef<HTMLDivElement>(null);
   const step3Ref = useRef<HTMLDivElement>(null);
@@ -750,7 +829,7 @@ export function Flow20260708() {
       setTimeout(() => step5Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     }
   }, [formActiveStep]);
-  
+
   const selectedTotalAmount = selectedPackageOrders.reduce((sum, id) => {
     return sum + (MOCK_PACKAGE_ORDERS.find(o => o.id === id)?.price || 0);
   }, 0);
@@ -758,6 +837,17 @@ export function Flow20260708() {
   const selectedTotalWeight = selectedPackageOrders.reduce((sum, id) => {
     return sum + (MOCK_PACKAGE_ORDERS.find(o => o.id === id)?.weight || 0);
   }, 0);
+
+  useEffect(() => {
+    if (selectedTotalWeight > 0) {
+      const validOption = WEIGHT_OPTIONS.find(w => w > selectedTotalWeight);
+      if (validOption) {
+        if (!autoRemoveWeightLimit || autoRemoveWeightLimit <= selectedTotalWeight) {
+          setAutoRemoveWeightLimit(validOption);
+        }
+      }
+    }
+  }, [selectedTotalWeight, autoRemoveWeightLimit]);
 
   const toggleOrder = (id: string) => {
     setSelectedPackageOrders(prev => {
@@ -885,7 +975,29 @@ export function Flow20260708() {
             <div className="flex gap-4 items-start">
               <div className="w-32 text-[13px] font-bold text-gray-600 shrink-0 mt-1">物流意向与容器</div>
               <div className="flex-1 space-y-3">
-                <div className="text-[15px] font-bold text-gray-900">{currentIntent.adminIntent}</div>
+                <div className="text-[15px] font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+                  <span>{currentIntent.adminIntent}</span>
+                  {(() => {
+                    const currentIntentObj = LOGISTICS_INTENTS.find(i => i.id === logisticsIntent);
+                    const currentSubRouteObj = currentIntentObj?.subOptions?.find(s => s.id === specificRoute);
+                    const hasDiscount = currentSubRouteObj ? (currentSubRouteObj as any).hasZeroOutDiscount : (currentIntentObj as any).hasZeroOutDiscount;
+                    const billingStepTip = currentSubRouteObj ? (currentSubRouteObj as any).billingStepTip : (currentIntentObj as any).billingStepTip;
+                    return (
+                      <>
+                        {hasDiscount && (
+                          <span className="text-[11px] px-2 py-0.5 rounded font-bold bg-emerald-600 text-white border border-emerald-700 shadow-sm flex items-center gap-1">
+                            <span>✨ 10g 抹零优惠</span>
+                          </span>
+                        )}
+                        {billingStepTip && (
+                          <span className="text-[11px] px-2 py-0.5 rounded font-bold bg-blue-600 text-white border border-blue-700 shadow-sm flex items-center gap-1">
+                            <span>💎 {billingStepTip}</span>
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="px-2.5 py-1 text-[13px] font-bold rounded bg-blue-100 text-blue-700 border border-blue-200">
                     {boxOption === 'new_box' ? `付费新箱 (${selectedCustomBoxModel})` : BOX_OPTIONS.find(o => o.id === boxOption)?.title}
@@ -895,6 +1007,19 @@ export function Flow20260708() {
                       {tag}
                     </span>
                   ))}
+                  {(() => {
+                    const currentIntentObj = LOGISTICS_INTENTS.find(i => i.id === logisticsIntent);
+                    const currentSubRouteObj = currentIntentObj?.subOptions?.find(s => s.id === specificRoute);
+                    const hasDiscount = currentSubRouteObj ? (currentSubRouteObj as any).hasZeroOutDiscount : (currentIntentObj as any).hasZeroOutDiscount;
+                    if (hasDiscount) {
+                      return (
+                        <span className="px-2.5 py-1 text-[13px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          📢 打包员必看：此线路支持【10g 抹零】！
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             </div>
@@ -965,6 +1090,60 @@ export function Flow20260708() {
                   </div>
                 ) : (
                   <div className="text-[12px] text-gray-400 italic mt-1">无增值附加服务</div>
+                )}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-px bg-gray-100" />
+
+            {/* 重量与体积控制 */}
+            <div className="flex gap-4 items-start">
+              <div className="w-32 text-[13px] font-bold text-gray-600 shrink-0 mt-1">重量与体积控制</div>
+              <div className="flex-1 space-y-2">
+                <div className="text-[13.5px] text-gray-900 font-medium flex items-center gap-2">
+                  <span>客户控制要求:</span>
+                  {weightControlOption === 'no_control' && (
+                    <span className="text-gray-500 font-bold bg-gray-150 px-2 py-0.5 rounded text-[12px]">不控制，全数打包发货</span>
+                  )}
+                  {weightControlOption === 'auto_remove' && (
+                    <span className="text-amber-800 font-bold bg-amber-100 px-2 py-0.5 rounded border border-amber-200 text-[12px]">
+                      随机取出并控制 (目标上限: ≤ {autoRemoveWeightLimit}g)
+                    </span>
+                  )}
+                  {weightControlOption === 'specify_remove' && (
+                    <span className="text-red-800 font-bold bg-red-100 px-2 py-0.5 rounded border border-red-200 text-[12px]">
+                      指定取出 (指定移除单号: {specifiedRemoveOrders.length > 0 ? specifiedRemoveOrders.join(', ') : '未指定'})
+                    </span>
+                  )}
+                </div>
+                
+                {weightControlOption === 'auto_remove' && (
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[12.5px] text-amber-900 space-y-1.5 shadow-sm">
+                    <div className="font-bold flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>打包员实操指引 (随机取出)：</span>
+                    </div>
+                    <p className="leading-relaxed">
+                      请打包人员重点注意，该合单已设定重量控制上限 <span className="font-bold font-mono text-rose-600">{autoRemoveWeightLimit}g</span>。
+                      若最终实货总重量超出控制上限时，请<b>在当前打包包裹中随机取出 1-2 件商品包裹</b>（通常优先拿出较重、较厚的非核心杂物），使得整体打包包裹的最终实重控制在 <span className="font-bold font-mono text-rose-600">{autoRemoveWeightLimit}g</span> 以内。
+                    </p>
+                    <div className="text-[11px] text-gray-500 mt-1">
+                      (被取出的商品订单放回入库搁架区，扫描还原至“已入库”状态，不可随箱发货)
+                    </div>
+                  </div>
+                )}
+
+                {weightControlOption === 'specify_remove' && (
+                  <div className="p-3 bg-rose-50/60 rounded-xl border border-rose-200 text-[12.5px] text-rose-900 space-y-1.5 shadow-sm">
+                    <div className="font-bold flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                      <span>打包员实操指引 (指定取出)：</span>
+                    </div>
+                    <p className="leading-relaxed">
+                      若打包合单称重结果不合规，必须单独将客户指定的入库商品单号：<span className="font-mono font-bold text-red-700 bg-white px-2 py-0.5 rounded border border-red-200 shadow-sm">{specifiedRemoveOrders.length > 0 ? specifiedRemoveOrders.join(', ') : '【未指定】'}</span> 拿出，排除在本次合包发货之外，放回入库搁架。
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -1396,7 +1575,7 @@ export function Flow20260708() {
                             key={intent.id}
                             onClick={() => {
                               setLogisticsIntent(intent.id);
-                              if (intent.subOptions && intent.subOptions.length > 0) {
+                              if (intent.hasSubOptions && !(intent as any).displayOnlySubOptions && intent.subOptions && intent.subOptions.length > 0) {
                                 const firstRoute = intent.subOptions[0];
                                 setSpecificRoute(firstRoute.id);
                                 if ((firstRoute as any).isBag) {
@@ -1413,8 +1592,19 @@ export function Flow20260708() {
                                 {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"/>}
                               </div>
                               <div className="flex-1">
-                                <div className={`font-bold text-[14px] ${isSelected ? 'text-blue-900' : 'text-gray-800'}`}>
+                                <div className={`font-bold text-[14px] flex items-center gap-1.5 ${isSelected ? 'text-blue-900' : 'text-gray-800'}`}>
                                   {intent.title}
+                                  {(intent as any).showVolCalcExample && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowVolCalcModal((intent as any).showVolCalcExample);
+                                      }}
+                                      className="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-0.5 rounded transition-colors"
+                                    >
+                                      <Info className="w-4 h-4" />
+                                    </button>
+                                  )}
                                 </div>
                                 <div className="text-[12px] text-gray-500 mt-1 whitespace-pre-wrap leading-relaxed">
                                   {intent.desc}
@@ -1425,31 +1615,45 @@ export function Flow20260708() {
                             {isSelected && intent.hasSubOptions && (
                               <div className="mt-3 ml-7 space-y-2 border-t border-blue-100 pt-3">
                                 {intent.subOptions?.map(route => {
-                                  const isRouteSelected = specificRoute === route.id;
+                                  const isDisplayOnly = (intent as any).displayOnlySubOptions;
+                                  const isRouteSelected = !isDisplayOnly && specificRoute === route.id;
                                   const maxOrders = (route as any).maxOrders;
-                                  const isMaxOrdersExceeded = maxOrders !== undefined && selectedPackageOrders.length > maxOrders;
+                                  const isMaxOrdersExceeded = !isDisplayOnly && maxOrders !== undefined && selectedPackageOrders.length > maxOrders;
                                   return (
                                     <div 
                                       key={route.id}
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        if (isDisplayOnly) return;
                                         if (isMaxOrdersExceeded) return;
                                         setSpecificRoute(route.id);
                                         if ((route as any).isBag) {
                                           setBoxOption('free_box');
                                         }
                                       }}
-                                      className={`p-2.5 rounded border ${isMaxOrdersExceeded ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : isRouteSelected ? 'border-blue-400 bg-white' : 'border-gray-200 bg-white hover:border-blue-300'}`}
+                                      className={`p-2.5 rounded border ${isMaxOrdersExceeded ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : isDisplayOnly ? 'border-gray-100 bg-gray-50' : isRouteSelected ? 'border-blue-400 bg-white' : 'border-gray-200 bg-white hover:border-blue-300'} ${isDisplayOnly ? 'cursor-default' : 'cursor-pointer'}`}
                                     >
                                       <div className="flex items-start gap-2">
-                                        <div className={`w-3.5 h-3.5 mt-0.5 rounded-full border-2 shrink-0 flex items-center justify-center ${isRouteSelected && !isMaxOrdersExceeded ? 'border-blue-500 bg-blue-500' : 'border-gray-300'}`}>
-                                          {isRouteSelected && !isMaxOrdersExceeded && <div className="w-1.5 h-1.5 bg-white rounded-full"/>}
-                                        </div>
+                                        {!isDisplayOnly && (
+                                          <div className={`w-3.5 h-3.5 mt-0.5 rounded-full border-2 shrink-0 flex items-center justify-center ${isRouteSelected && !isMaxOrdersExceeded ? 'border-blue-500 bg-blue-500' : 'border-gray-300'}`}>
+                                            {isRouteSelected && !isMaxOrdersExceeded && <div className="w-1.5 h-1.5 bg-white rounded-full"/>}
+                                          </div>
+                                        )}
                                         <div className="flex-1">
-                                          <div className={`font-bold text-[13px] ${isMaxOrdersExceeded ? 'text-gray-500' : isRouteSelected ? 'text-blue-900' : 'text-gray-800'}`}>
-                                            {route.title}
-                                            {route.isDanger && <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded ${isMaxOrdersExceeded ? 'bg-gray-200 text-gray-500' : 'bg-amber-100 text-amber-700'}`}>免责</span>}
-                                            {(route as any).requireNewBox && <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded ${isMaxOrdersExceeded ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>仅限新箱</span>}
+                                          <div className={`font-bold text-[13px] flex items-center flex-wrap gap-1 ${isMaxOrdersExceeded ? 'text-gray-500' : isRouteSelected ? 'text-blue-900' : 'text-gray-800'}`}>
+                                            <span>{route.title}</span>
+                                            {route.isDanger && <span className={`text-[10px] px-1.5 py-0.5 rounded ${isMaxOrdersExceeded ? 'bg-gray-200 text-gray-500' : 'bg-amber-100 text-amber-700'}`}>免责</span>}
+                                            {(route as any).requireNewBox && <span className={`text-[10px] px-1.5 py-0.5 rounded ${isMaxOrdersExceeded ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-700'}`}>仅限新箱</span>}
+                                            {(route as any).hasZeroOutDiscount && (
+                                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-700 border border-emerald-200/60`}>
+                                                ✨ 10g 抹零优惠
+                                              </span>
+                                            )}
+                                            {(route as any).billingStepTip && (
+                                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold bg-blue-100 text-blue-700 border border-blue-200/60`}>
+                                                💎 {(route as any).billingStepTip}
+                                              </span>
+                                            )}
                                           </div>
                                           <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-wrap leading-relaxed">
                                             {route.desc}
@@ -1528,9 +1732,11 @@ export function Flow20260708() {
                             <button 
                               disabled={isCurrentRouteInvalid}
                               onClick={() => {
-                                if ((currentSubRouteObj as any)?.isBag) {
+                                const isBag = (currentSubRouteObj as any)?.isBag || (currentIntentObj as any)?.isBag;
+                                const requireNewBox = (currentSubRouteObj as any)?.requireNewBox || (currentIntentObj as any)?.requireNewBox;
+                                if (isBag) {
                                    setBoxOption('free_box');
-                                } else if ((currentSubRouteObj as any)?.requireNewBox) {
+                                } else if (requireNewBox) {
                                    setBoxOption('new_box');
                                 }
                                 setFormActiveStep(2);
@@ -1548,11 +1754,33 @@ export function Flow20260708() {
                   <div className="p-4 flex items-center gap-3">
                     <div className="flex-1">
                       <div className="text-[13px] text-gray-500">已选意向</div>
-                      <div className="font-medium text-[14px] text-gray-900 mt-1">
-                        {LOGISTICS_INTENTS.find(i => i.id === logisticsIntent)?.title}
-                        {LOGISTICS_INTENTS.find(i => i.id === logisticsIntent)?.hasSubOptions && specificRoute && (
-                          <span className="text-blue-600"> - {LOGISTICS_INTENTS.find(i => i.id === logisticsIntent)?.subOptions?.find(r => r.id === specificRoute)?.title}</span>
-                        )}
+                      <div className="font-medium text-[14px] text-gray-900 mt-1 flex items-center gap-2 flex-wrap">
+                        <span>
+                          {LOGISTICS_INTENTS.find(i => i.id === logisticsIntent)?.title}
+                          {LOGISTICS_INTENTS.find(i => i.id === logisticsIntent)?.hasSubOptions && specificRoute && (
+                            <span className="text-blue-600"> - {LOGISTICS_INTENTS.find(i => i.id === logisticsIntent)?.subOptions?.find(r => r.id === specificRoute)?.title}</span>
+                          )}
+                        </span>
+                        {(() => {
+                          const currentIntentObj = LOGISTICS_INTENTS.find(i => i.id === logisticsIntent);
+                          const currentSubRouteObj = currentIntentObj?.subOptions?.find(s => s.id === specificRoute);
+                          const hasDiscount = currentSubRouteObj ? (currentSubRouteObj as any).hasZeroOutDiscount : (currentIntentObj as any).hasZeroOutDiscount;
+                          const billingStepTip = currentSubRouteObj ? (currentSubRouteObj as any).billingStepTip : (currentIntentObj as any).billingStepTip;
+                          return (
+                            <>
+                              {hasDiscount && (
+                                <span className="text-[11px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                  ✨ 10g 抹零优惠
+                                </span>
+                              )}
+                              {billingStepTip && (
+                                <span className="text-[11px] px-1.5 py-0.5 rounded font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                  💎 {billingStepTip}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -1589,21 +1817,24 @@ export function Flow20260708() {
                               onClick={() => {
                                 const currentIntent = LOGISTICS_INTENTS.find(i => i.id === logisticsIntent);
                                 const currentSubRoute = currentIntent?.subOptions?.find(s => s.id === specificRoute);
+                                const isBag = (currentSubRoute as any)?.isBag || (currentIntent as any)?.isBag;
+                                const requireNewBox = (currentSubRoute as any)?.requireNewBox || (currentIntent as any)?.requireNewBox;
+                                const routeTitle = currentSubRoute?.title || currentIntent?.title;
                                 
-                                if ((currentSubRoute as any)?.isBag && opt.id !== 'free_box') {
+                                if (isBag && opt.id !== 'free_box') {
                                   setBoxConfirmModal({
                                     show: true,
                                     targetBox: opt.id,
                                     targetBoxTitle: opt.title,
-                                    routeTitle: currentSubRoute.title,
+                                    routeTitle: routeTitle,
                                     isBagConflict: true
                                   });
-                                } else if ((currentSubRoute as any)?.requireNewBox && opt.id !== 'new_box') {
+                                } else if (requireNewBox && opt.id !== 'new_box') {
                                   setBoxConfirmModal({
                                     show: true,
                                     targetBox: opt.id,
                                     targetBoxTitle: opt.title,
-                                    routeTitle: currentSubRoute.title
+                                    routeTitle: routeTitle
                                   });
                                 } else {
                                   setBoxOption(opt.id);
@@ -1835,8 +2066,84 @@ export function Flow20260708() {
                                   <div className="text-[12px] text-gray-500 mt-1">
                                     {opt.desc}
                                   </div>
-                                  {(opt.id === 'auto_remove' || opt.id === 'specify_remove') && (
+
+                                  {opt.id === 'auto_remove' && isSelected && (() => {
+                                    return (
+                                      <div className="mt-3 p-4 bg-gray-50/50 rounded-2xl border border-amber-200/60 space-y-3 shadow-sm text-[12px] text-gray-700" onClick={(e) => e.stopPropagation()}>
+                                        <div className="font-bold text-amber-900 flex items-center gap-1.5">
+                                          <Package className="w-3.5 h-3.5 text-amber-600" />
+                                          <span>指定目标控制重量:</span>
+                                        </div>
+
+                                        <div className="relative">
+                                          <div 
+                                            onClick={() => setIsWeightDropdownOpen(!isWeightDropdownOpen)}
+                                            className="w-full flex items-center justify-between p-2.5 text-[13px] border border-gray-200 rounded-lg bg-white cursor-pointer hover:border-blue-300 transition-colors shadow-sm"
+                                          >
+                                            <span className="text-gray-800 font-bold font-mono">
+                                              {autoRemoveWeightLimit}g
+                                            </span>
+                                            <span className="text-blue-500 text-[11px] font-medium shrink-0 ml-1">切换/选择 ▾</span>
+                                          </div>
+
+                                          {isWeightDropdownOpen && (
+                                            <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-40 flex flex-col max-h-56 overflow-hidden">
+                                              <div className="overflow-y-auto divide-y divide-gray-100 flex-1">
+                                                {WEIGHT_OPTIONS.filter(weight => weight > selectedTotalWeight).map(weight => {
+                                                  const isCurrent = autoRemoveWeightLimit === weight;
+                                                  return (
+                                                    <div
+                                                      key={weight}
+                                                      onClick={() => {
+                                                        setAutoRemoveWeightLimit(weight);
+                                                        setIsWeightDropdownOpen(false);
+                                                      }}
+                                                      className={`p-2.5 flex justify-between items-center transition-colors text-left ${
+                                                        isCurrent 
+                                                          ? 'bg-blue-50 hover:bg-blue-100 cursor-pointer' 
+                                                          : 'hover:bg-gray-50 cursor-pointer'
+                                                      }`}
+                                                    >
+                                                      <span className={`text-[13px] font-mono font-bold ${isCurrent ? 'text-blue-600' : 'text-gray-800'}`}>
+                                                        {weight}g
+                                                      </span>
+                                                      {isCurrent && (
+                                                        <span className="text-blue-600 font-bold text-[11px] bg-blue-50 px-1.5 py-0.5 rounded">
+                                                          当前选中
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  );
+                                                })}
+                                                {WEIGHT_OPTIONS.filter(weight => weight > selectedTotalWeight).length === 0 && (
+                                                  <div className="p-4 text-center text-gray-500 text-[12px]">
+                                                    当前重量已超出最大可选档位
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div className="bg-amber-50/60 p-2.5 rounded-lg border border-amber-200/50 text-[11px] text-amber-800 leading-normal text-center">
+                                          当前合单总重量为 <span className="font-bold font-mono text-blue-600">{selectedTotalWeight}g</span>，
+                                          已选控制档位为 <span className="font-mono font-bold text-red-600">{autoRemoveWeightLimit}g</span>。
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+
+                                  {(opt.id === 'auto_remove' || opt.id === 'specify_remove') && !isSelected && (
                                     <div className="mt-2 p-2 bg-amber-50/80 rounded text-[11px] text-amber-700 flex gap-1.5 items-start border border-amber-100">
+                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                      <div className="leading-relaxed">
+                                        <span className="font-bold">注意：</span>取出的商品将恢复为<span className="font-bold">入库状态</span>。若该商品已超出免费仓储期，在此期间将产生<span className="font-bold text-red-600">逾期仓储费</span>。
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {opt.id === 'specify_remove' && isSelected && (
+                                    <div className="mt-2 p-2 bg-amber-50/80 rounded text-[11px] text-amber-700 flex gap-1.5 items-start border border-amber-100" onClick={(e) => e.stopPropagation()}>
                                       <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                                       <div className="leading-relaxed">
                                         <span className="font-bold">注意：</span>取出的商品将恢复为<span className="font-bold">入库状态</span>。若该商品已超出免费仓储期，在此期间将产生<span className="font-bold text-red-600">逾期仓储费</span>。
@@ -1852,11 +2159,28 @@ export function Flow20260708() {
 
                       {weightControlOption === 'specify_remove' && (
                         <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                          <div className="text-[13px] text-blue-800 mb-2 font-medium">请选择要指定取出的订单（仅限1个）：</div>
-                          {specifiedRemoveOrder ? (
-                            <div className="flex items-center justify-between bg-white border border-blue-200 p-2 rounded">
-                              <span className="text-[13px] font-bold text-gray-800">入库编号: {specifiedRemoveOrder}</span>
-                              <button onClick={() => setShowOrderSelectModal(true)} className="text-blue-600 text-[12px] hover:underline">更换</button>
+                          <div className="flex justify-between items-end mb-2">
+                            <div className="text-[13px] text-blue-800 font-medium">请选择要指定取出的订单：</div>
+                            <div className="text-[12px] text-red-500 font-bold">200円/单</div>
+                          </div>
+                          {specifiedRemoveOrders.length > 0 ? (
+                            <div className="space-y-2">
+                              {specifiedRemoveOrders.map(orderId => (
+                                <div key={orderId} className="flex items-center justify-between bg-white border border-blue-200 p-2 rounded">
+                                  <span className="text-[13px] font-bold text-gray-800">入库编号: {orderId}</span>
+                                  <button onClick={() => setSpecifiedRemoveOrders(prev => prev.filter(id => id !== orderId))} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                              <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-200/50">
+                                <div className="text-[12px] text-blue-800 font-medium">
+                                  已选 <span className="font-bold">{specifiedRemoveOrders.length}</span> 单，预计产生操作费 <span className="text-red-500 font-bold">{specifiedRemoveOrders.length * 200}円</span>
+                                </div>
+                                <button onClick={() => setShowOrderSelectModal(true)} className="text-blue-600 text-[12px] hover:underline flex items-center gap-1">
+                                  <Plus className="w-3 h-3" /> 继续添加
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <button 
@@ -1885,7 +2209,7 @@ export function Flow20260708() {
                     <div className="p-4">
                       <div className="text-[13px] text-gray-500">已选要求</div>
                       <div className="font-medium text-[14px] text-gray-900 mt-1">
-                        {weightControlOption === 'no_control' ? '不控制' : weightControlOption === 'auto_remove' ? '随机取出' : `指定取出 ${specifiedRemoveOrder ? '[' + specifiedRemoveOrder + ']' : ''}`}
+                        {weightControlOption === 'no_control' ? '不控制' : weightControlOption === 'auto_remove' ? `随机取出 (设定上限: ${autoRemoveWeightLimit}g)` : `指定取出 ${specifiedRemoveOrders.length > 0 ? '[' + specifiedRemoveOrders.join(', ') + ']' : ''}`}
                       </div>
                     </div>
                   )}
@@ -2511,6 +2835,33 @@ export function Flow20260708() {
                                   }}
                                   className="w-full bg-gray-50 border border-gray-200 rounded p-1.5 text-[11px] h-12 focus:border-blue-400 focus:bg-white focus:outline-none transition-colors"
                                 />
+                                <div className="pt-1 flex justify-end">
+                                  {selectedItem.annotation ? (
+                                    <div className="flex items-center justify-between w-full p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center shrink-0">
+                                          <Check className="w-3.5 h-3.5 text-blue-600" />
+                                        </div>
+                                        <div className="text-[11px] text-blue-800">
+                                          已包含<span className="font-bold">{selectedItem.annotation.type === 'product' ? '商品图' : '入库图'}标注</span> ({selectedItem.annotation.markers.length} 处)
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => setShowAnnotationModal({ addonId: addon.id, orderId: currentOrder?.id || '', imageType: selectedItem.annotation?.type || 'product', markers: [...selectedItem.annotation?.markers || []] })}
+                                        className="text-[11px] text-blue-600 font-medium hover:underline px-2 py-1"
+                                      >
+                                        修改
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => setShowAnnotationModal({ addonId: addon.id, orderId: currentOrder?.id || '', imageType: 'product', markers: [] })}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-[11px] font-medium text-gray-700 transition-colors"
+                                    >
+                                      <span className="text-[14px]">📷</span> 辅助图片标注
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -2744,23 +3095,41 @@ export function Flow20260708() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="text-[12px] text-gray-500 mb-2">可选择多个订单，最多取出 {selectedPackageOrders.length - 1} 单（需保留至少 1 单发货）。</div>
                 {selectedPackageOrders.map(orderId => {
                   const order = MOCK_PACKAGE_ORDERS.find(o => o.id === orderId);
                   if (!order) return null;
+                  
+                  const isSelected = specifiedRemoveOrders.includes(orderId);
+                  const isDisabled = !isSelected && specifiedRemoveOrders.length >= selectedPackageOrders.length - 1;
+                  
                   return (
                     <div 
                       key={orderId}
                       onClick={() => {
-                        setSpecifiedRemoveOrder(orderId);
-                        setShowOrderSelectModal(false);
+                        if (isDisabled) return;
+                        setSpecifiedRemoveOrders(prev => 
+                          isSelected ? prev.filter(id => id !== orderId) : [...prev, orderId]
+                        );
                       }}
-                      className="border border-gray-200 rounded-lg p-3 flex gap-3 cursor-pointer hover:border-blue-300 transition-colors"
+                      className={`border rounded-lg p-3 flex gap-3 transition-colors ${
+                        isSelected ? 'border-blue-500 bg-blue-50/30 ring-1 ring-blue-500' : 
+                        isDisabled ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed' : 
+                        'border-gray-200 cursor-pointer hover:border-blue-300'
+                      }`}
                     >
+                      <div className={`w-5 h-5 rounded border shrink-0 flex items-center justify-center mt-0.5 ${
+                        isSelected ? 'bg-blue-500 border-blue-500' : 
+                        isDisabled ? 'bg-gray-100 border-gray-300' : 
+                        'bg-white border-gray-300'
+                      }`}>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+                      </div>
                       <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden shrink-0">
                         <img src={order.image} alt="Product" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-bold text-gray-800">入库编号: {order.id}</div>
+                        <div className={`text-[13px] font-bold ${isSelected ? 'text-blue-900' : 'text-gray-800'}`}>入库编号: {order.id}</div>
                         <div className="text-[12px] text-gray-500 mt-1 truncate">{order.title}</div>
                         <div className="text-[12px] text-gray-400 mt-1">重量: {order.weight}g</div>
                       </div>
@@ -2768,9 +3137,152 @@ export function Flow20260708() {
                   );
                 })}
               </div>
+              <div className="p-4 border-t border-gray-100 bg-white">
+                <button 
+                  onClick={() => setShowOrderSelectModal(false)}
+                  className="w-full py-2.5 rounded-full bg-[#ffd200] text-gray-900 text-[14px] font-bold hover:bg-yellow-400 active:scale-95 transition-transform"
+                >
+                  确认选择
+                </button>
+              </div>
             </div>
           </div>
         )}
+        
+        {/* Annotation Modal */}
+        {showVolCalcModal && (
+          <div className="absolute inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowVolCalcModal(null)}>
+            <div className="bg-white rounded-xl shadow-xl w-[320px] overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div className="p-4 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
+                <div className="font-bold flex items-center gap-1.5 text-indigo-800">
+                  <Info className="w-4 h-4 text-indigo-600" />
+                  体积重计算示例
+                </div>
+                <button onClick={() => setShowVolCalcModal(null)} className="p-1 hover:bg-indigo-100 rounded text-indigo-600">
+                  <span className="text-[18px] leading-none">&times;</span>
+                </button>
+              </div>
+              <div className="p-5 text-[13px] leading-relaxed text-gray-700 space-y-3">
+                <p>
+                  以一个<span className="font-bold text-gray-900">实际重量 2000g</span>，体积为 <span className="font-bold text-gray-900">60000cm³</span> (例如 40×30×50cm) 的箱子为例：
+                </p>
+                <ul className="list-disc pl-4 space-y-2 font-mono text-[12px] bg-gray-50 p-3 rounded border border-gray-100">
+                  <li>除以 5000 的体积重为：<span className="font-bold text-red-600">12kg</span></li>
+                  <li>除以 6000 的体积重为：<span className="font-bold text-red-600">10kg</span></li>
+                  <li>除以 12000 的体积重为：<span className="font-bold text-red-600">5kg</span></li>
+                </ul>
+                <div className="mt-2 text-[12px] text-gray-500 bg-blue-50/50 p-2 rounded border border-blue-100/50">
+                  说明：最终计费重量将取【实际重量】与【体积重量】中的较大值。
+                </div>
+              </div>
+              <div className="p-3 border-t border-gray-100 text-center">
+                <button onClick={() => setShowVolCalcModal(null)} className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-[13px] font-bold transition-colors">
+                  我知道了
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAnnotationModal && (() => {
+          const order = MOCK_PACKAGE_ORDERS.find(o => o.id === showAnnotationModal.orderId);
+          if (!order) return null;
+          
+          return (
+            <div className="absolute inset-0 bg-black/90 z-[60] flex flex-col animate-in fade-in duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 text-white">
+                <button onClick={() => setShowAnnotationModal(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                  <span className="text-[24px] leading-none">&times;</span>
+                </button>
+                <div className="font-bold text-[16px]">图片标注</div>
+                <button 
+                  onClick={() => {
+                    if (showAnnotationModal.markers.length > 0) {
+                      setTempOrderAddons(prev => prev.map(a => 
+                        a.addonId === showAnnotationModal.addonId 
+                          ? { ...a, annotation: { type: showAnnotationModal.imageType, markers: showAnnotationModal.markers } } 
+                          : a
+                      ));
+                    } else {
+                      // Remove annotation if no markers
+                      setTempOrderAddons(prev => prev.map(a => {
+                        if (a.addonId === showAnnotationModal.addonId) {
+                          const { annotation, ...rest } = a;
+                          return rest;
+                        }
+                        return a;
+                      }));
+                    }
+                    setShowAnnotationModal(null);
+                  }}
+                  className="px-5 py-2 bg-[#ffd200] text-gray-900 rounded-full text-[14px] font-bold active:scale-95 transition-transform"
+                >
+                  保存
+                </button>
+              </div>
+
+              {/* Image Type Selector */}
+              <div className="flex justify-center gap-3 px-4 pb-4">
+                <button 
+                  onClick={() => setShowAnnotationModal(prev => prev ? {...prev, imageType: 'product'} : null)}
+                  className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all ${showAnnotationModal.imageType === 'product' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}
+                >
+                  卖家商品图
+                </button>
+                <button 
+                  onClick={() => setShowAnnotationModal(prev => prev ? {...prev, imageType: 'intake'} : null)}
+                  className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all ${showAnnotationModal.imageType === 'intake' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}
+                >
+                  仓库入库图
+                </button>
+              </div>
+
+              {/* Image Canvas */}
+              <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+                <div 
+                  className="relative inline-block max-w-full max-h-full cursor-crosshair rounded-lg overflow-hidden border border-white/10"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    setShowAnnotationModal(prev => prev ? {...prev, markers: [...prev.markers, {x, y}]} : null);
+                  }}
+                >
+                  <img 
+                    src={showAnnotationModal.imageType === 'product' ? order.image : 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80'} 
+                    alt="Target" 
+                    className="max-w-full max-h-[60vh] object-contain pointer-events-none"
+                    draggable={false}
+                  />
+                  {/* Markers */}
+                  {showAnnotationModal.markers.map((marker, idx) => (
+                    <div 
+                      key={idx}
+                      className="absolute w-10 h-10 -ml-5 -mt-5 border-[3px] border-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] flex items-center justify-center animate-in zoom-in-50 duration-200 cursor-pointer group"
+                      style={{ left: `${marker.x}%`, top: `${marker.y}%` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAnnotationModal(prev => prev ? {...prev, markers: prev.markers.filter((_, i) => i !== idx)} : null);
+                      }}
+                    >
+                      <div className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_5px_rgba(239,68,68,1)]"></div>
+                      <div className="absolute -top-4 -right-4 bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                        &times;
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer instruction */}
+              <div className="p-6 text-center text-white/80 text-[13px] bg-gradient-to-t from-black/80 to-transparent">
+                点击图片添加红色圆圈进行标注<br/>
+                <span className="text-white/50 text-[11px] mt-1 block">点击已标注的圆圈可将其删除</span>
+              </div>
+            </div>
+          );
+        })()}
       </div>
       <AdminView />
     </div>
