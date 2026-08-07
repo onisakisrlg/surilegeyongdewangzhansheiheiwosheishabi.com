@@ -2,5 +2,5 @@
   "name": "应用原型展示平台",
   "description": "一个专业的三栏式仪表盘，供设计师向工程团队展示应用原型、技术规范和开发要求。",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

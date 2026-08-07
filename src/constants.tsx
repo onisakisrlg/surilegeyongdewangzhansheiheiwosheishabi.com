@@ -2,16 +2,36 @@ import { PrototypeProject } from "./types";
 
 export const MOCK_PROJECTS: PrototypeProject[] = [
   {
+    id: "20260806",
+    name: "通用支付强制支付",
+    category: "账单与支付",
+    description: "针对仓储超期费、运费差额补缴及特殊加固等场景，设计的通用支付与APP端强制支付硬拦截管控机制。",
+    previewUrl: null,
+    redmineUrl: "https://redmine.rakutao.vip/issues/15208",
+    status: "in-progress",
+    specs: [
+      {
+        title: "设计背景与业务痛点",
+        content: "1. 仓储滞留与运费少计：用户包裹超期占用仓库空间、或是实际发货重超出预估产生运费差额时，需要向用户发起通用补缴单。\n2. 欠款拒付风险：部分用户因产生滞仓费或额外人工服务费后选择失联或放弃包裹，给平台造成亏损。\n3. 强制支付拦截：系统引入“强制支付”标记。带有该标记的账单若未结清，APP端将全方位拦截该用户的【打包出库】、【余额提现】与【新订单提交】等关键操作。"
+      },
+      {
+        title: "APP用户端硬拦截交互规则",
+        content: "1. 顶部全屏/看板强提醒：用户登录APP或进入订单/仓储列表时，顶部展示红/橙色风险警告 Banner，提示待结清强制支付单。\n2. 动作硬拦截弹窗：当用户试图点击“发起打包”、“申请提现”或“提交新单”时，弹窗硬拦截并高亮“请先完成强制支付”。\n3. 支付通道与余额优先扣除：支持账户余额、微信、支付宝、信用卡及PayPal支付。若余额充足可一键扣减；若不足支持快速补足或切换渠道。\n4. 结算即时解除：完成强制支付后，后台即时更新账单状态为[已结清]，APP拦截状态自动解除，恢复正常出库打包与提现功能。"
+      },
+      {
+        title: "管理端后台发起与管控功能",
+        content: "1. 发起通用/强制支付单：后台人员可指定用户ID，选择补缴类型（滞仓费、运费差额、特殊拆包加固费、赔偿金等），填写日元/人民币金额并上传仓库凭证照片。\n2. 强制开关控制：勾选“启用强制支付拦截”开关，单据生成后即刻对该APP账号产生硬拦截效力。\n3. 异常豁免与作废：主管权限可对争议单据执行“一键豁免/作废”，解除APP端拦截。"
+      }
+    ]
+  },
+  {
     id: "20260708",
     name: "出库与管理端结构化",
     category: "仓库打包",
     description: "展示app端和管理端。app端对应的操作会让管理端显示什么标签。",
     previewUrl: null,
     redmineUrl: null,
-    subItems: [
-      { id: "sub-0708-1", name: "APP端 (左侧)" },
-      { id: "sub-0708-2", name: "管理端 (右侧)" }
-    ],
+    status: "completed",
     specs: [
       {
         title: "设计说明",
@@ -47,9 +67,6 @@ export const MOCK_PROJECTS: PrototypeProject[] = [
     description: "针对日本邮局海运包裹派送失败退回的潜在高额追加运费痛点，设计的退运运费预扣费选项原型。",
     previewUrl: null,
     redmineUrl: "https://redmine.rakutao.vip/issues/14325",
-    subItems: [
-      { id: "sub-3-1", name: "运单选择主页面" }
-    ],
     specs: [
       {
         title: "设计要点",
@@ -82,10 +99,6 @@ export const MOCK_PROJECTS: PrototypeProject[] = [
     description: "展示打包过程中出现的异常图片及处理流程。",
     previewUrl: null,
     redmineUrl: "https://redmine.rakutao.vip/issues/14370",
-    subItems: [
-      { id: "sub-11-1", name: "管理端后台预览" },
-      { id: "sub-11-2", name: "APP用户前端预览" }
-    ],
     specs: [
       {
         title: "设计说明",

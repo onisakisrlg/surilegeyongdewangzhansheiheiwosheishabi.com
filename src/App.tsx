@@ -66,6 +66,7 @@ import {
 } from 'lucide-react';
 import { Flow20260702 } from './components/Flow20260702';
 import { Flow20260708 } from './components/Flow20260708';
+import { Flow20260806 } from './components/Flow20260806';
 import { MOCK_PROJECTS, MOCK_PACKAGE_ORDERS } from './constants';
 import { PrototypeProject } from './types';
 
@@ -141,7 +142,7 @@ const PawKeychainSvg = () => (
 );
 
 export default function App() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>('20260806');
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'tablet'>('desktop');
@@ -409,8 +410,7 @@ export default function App() {
         project.id.toLowerCase().includes(lowerQuery) ||
         project.name.toLowerCase().includes(lowerQuery) ||
         project.category.toLowerCase().includes(lowerQuery) ||
-        project.description.toLowerCase().includes(lowerQuery) ||
-        (project.subItems && project.subItems.some(sub => sub.name.toLowerCase().includes(lowerQuery)))
+        project.description.toLowerCase().includes(lowerQuery)
       );
     });
   }, [searchQuery]);
@@ -482,12 +482,11 @@ export default function App() {
                   </div>
                 ) : (
                   filteredProjects.map((project) => (
-                    <div key={project.id} className="space-y-1">
-                      <div
-                        onClick={() => {
+                    <div
+                      key={project.id}
+                      onClick={() => {
                         setSelectedId(project.id);
                         setSelectedSubId(null);
-                        toggleExpand(project.id);
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all group border cursor-pointer ${
                         selectedId === project.id 
@@ -495,9 +494,6 @@ export default function App() {
                           : 'text-gray-600 hover:bg-gray-100 border-transparent'
                       }`}
                     >
-                      <div className={`p-1 rounded-md ${selectedId === project.id ? 'bg-white/10' : 'bg-gray-100'}`}>
-                        {expandedItems[project.id] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                      </div>
                       <div className="flex-1 text-left min-w-0">
                         <div className="flex items-center gap-2">
                           <span className={`block text-[10px] font-semibold tracking-wider uppercase ${selectedId === project.id ? 'text-gray-300' : 'text-gray-400 group-hover:text-black/60'}`}>
@@ -532,36 +528,7 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-
-                    <AnimatePresence>
-                      {expandedItems[project.id] && project.subItems && (
-                        <motion.div 
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="ml-4 pl-4 border-l border-gray-100 space-y-1 overflow-hidden"
-                        >
-                          {project.subItems.map(subItem => (
-                            <button
-                              key={subItem.id}
-                              onClick={() => {
-                                setSelectedId(project.id);
-                                setSelectedSubId(subItem.id);
-                              }}
-                              className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
-                                selectedSubId === subItem.id 
-                                  ? 'text-black font-semibold bg-gray-100' 
-                                  : 'text-gray-500 hover:text-black'
-                              }`}
-                            >
-                              {subItem.name}
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )))}
+                  )))}
               </nav>
             </>
           ) : (
@@ -671,7 +638,7 @@ export default function App() {
               
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="font-medium text-black">
-                  {selectedSubId ? MOCK_PROJECTS.find(p => p.id === selectedId)?.subItems?.find(s => s.id === selectedSubId)?.name : '完整预览'}
+                  完整预览
                 </span>
               </div>
             </div>
@@ -1175,7 +1142,9 @@ export default function App() {
                             </div>
                           </div>
                         </div>
-) : selectedId === '20260708' ? (
+) : selectedId === '20260806' ? (
+                        <Flow20260806 />
+                      ) : selectedId === '20260708' ? (
                         <Flow20260708 />
                       ) : selectedId === '20260515' ? (
                         /* Rakutao Management System Reconstruction */
@@ -2676,7 +2645,7 @@ export default function App() {
                   {/* Floating Annotation Tag */}
                   <div className="absolute bottom-16 right-4 flex flex-col gap-2 pointer-events-none">
                     <div className="bg-black/95 text-white py-1.5 px-3 rounded-lg rounded-br-none text-[9.5px] font-semibold shadow-md leading-none border border-white/10">
-                      视图: {selectedSubId ? selectedProject?.subItems?.find(s => s.id === selectedSubId)?.name : '基础路由'}
+                      视图: 基础路由
                     </div>
                   </div>
                 </div>
