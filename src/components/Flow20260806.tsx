@@ -324,7 +324,9 @@ export function Flow20260806() {
           categoryIcon: 'extra',
           proofImages: [DEFAULT_PROOF_IMAGES.package]
         },
-        ...prev.filter(o => o.isForced && o.status === '未支付' ? { ...o, status: '已支付' } : true).filter(o => o.id !== 'fee-nonforced-demo')
+        ...prev
+          .filter(o => o.id !== 'fee-nonforced-demo')
+          .map(o => (o.isForced && o.status === '未支付' ? { ...o, status: '已支付' as const } : o))
       ]);
       setInAppNoticeDismissed(false);
       showToast('已切换至【非强制支付】模式：用户打开APP正常使用，仅显示一条站内信通知');
