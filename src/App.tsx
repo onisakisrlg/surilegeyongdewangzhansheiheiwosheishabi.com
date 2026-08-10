@@ -38,6 +38,7 @@ import {
   Upload,
   Image as ImageIcon,
   FileText,
+  FileDown,
   Layers,
   Plus,
   X,
@@ -69,6 +70,7 @@ import { Flow20260708 } from './components/Flow20260708';
 import { Flow20260806 } from './components/Flow20260806';
 import { MOCK_PROJECTS, MOCK_PACKAGE_ORDERS } from './constants';
 import { PrototypeProject } from './types';
+import { exportProjectPRDToPDF } from './utils/pdfExporter';
 
 const LOGISTICS_METHODS = [
   { id: 'ems', name: 'EMS【税费自理】', price: 9800, boxFee: 200, subtext: '' },
@@ -149,6 +151,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSpecsCollapsed, setIsSpecsCollapsed] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // 海运/空运退运方案互动状态
   const [activeMethod, setActiveMethod] = useState<string>('sea');
@@ -570,13 +573,39 @@ export default function App() {
 
               {!isSpecsCollapsed ? (
                 <div className="p-8 h-full overflow-y-auto custom-scrollbar">
-                  <div className="mb-8">
-                    <div className="flex items-center gap-2 text-indigo-600 mb-2 font-medium text-xs tracking-wider uppercase">
-                      <BookOpen className="w-4 h-4" />
-                      <span>核心设计要点</span>
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between gap-2 text-indigo-600 mb-2 font-medium text-xs tracking-wider uppercase">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        <span className="font-bold text-indigo-700">需求文档</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!selectedProject || isExportingPdf) return;
+                          setIsExportingPdf(true);
+                          try {
+                            await exportProjectPRDToPDF(selectedProject);
+                          } catch (err) {
+                            console.error('PDF export error:', err);
+                          } finally {
+                            setIsExportingPdf(false);
+                          }
+                        }}
+                        disabled={isExportingPdf}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                        title="下载当前项目的PRD需求文档 PDF"
+                      >
+                        {isExportingPdf ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <FileDown className="w-3.5 h-3.5" />
+                        )}
+                        <span>{isExportingPdf ? '导出中...' : '下载需求文档 (PDF)'}</span>
+                      </button>
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight mb-3">{selectedProject.name}</h1>
-                    <p className="text-gray-500 leading-relaxed text-sm">
+                    <h1 className="text-2xl font-bold tracking-tight mb-2 text-gray-900">{selectedProject.name}</h1>
+                    <p className="text-gray-500 leading-relaxed text-xs">
                       {selectedProject.description}
                     </p>
                   </div>

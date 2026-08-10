@@ -102,7 +102,7 @@ const INITIAL_ORDERS: AdminFeeOrder[] = [
     creator: 'shaoxiaoxiao',
     createTime: '2026-08-07 13:40:21',
     categoryIcon: 'tax',
-    proofImages: [DEFAULT_PROOF_IMAGES.tax, DEFAULT_PROOF_IMAGES.weight]
+    proofImages: [DEFAULT_PROOF_IMAGES.tax]
   },
   {
     id: 'fee-102',
@@ -207,20 +207,44 @@ export function Flow20260806() {
   const [modalMemberId, setModalMemberId] = useState(currentAppMemberId);
   const [modalFeeCategory, setModalFeeCategory] = useState<FeeCategory>('海关补交税金');
   const [modalAmountJpy, setModalAmountJpy] = useState<number>(1249);
-  const [modalIsForced, setModalIsForced] = useState<boolean>(true);
+  const [modalIsForced, setModalIsForced] = useState<boolean | null>(null);
   const [modalHasCountdown, setModalHasCountdown] = useState<boolean>(false);
   const [modalValidityHours, setModalValidityHours] = useState<number>(24);
   const [modalDetailReason, setModalDetailReason] = useState<string>(
     '包裹在海关实际妥投清关环节产生税费查验差额，需补缴税金差额。请在APP内完成支付，支付完成后系统将即时解除出库限制并恢复所有功能。'
   );
-  const [modalImageUrls, setModalImageUrls] = useState<string[]>([DEFAULT_PROOF_IMAGES.tax, DEFAULT_PROOF_IMAGES.weight]);
+  const [modalImageUrls, setModalImageUrls] = useState<string[]>([DEFAULT_PROOF_IMAGES.tax]);
   const [modalCustomImageUrl, setModalCustomImageUrl] = useState<string>('');
+
+  // Handle Clipboard Paste for Image Upload
+  const handlePasteImage = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = event => {
+            if (event.target?.result) {
+              setModalImageUrls([event.target.result as string]);
+              showToast('📋 已通过剪贴板粘贴导入凭证图片！');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+        break;
+      }
+    }
+  };
 
   // Proof Image Preview Modal
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // App Client State
-  const [selectedPayMethod, setSelectedPayMethod] = useState<'wechat' | 'alipay' | 'balance'>('wechat');
+  const [selectedPayMethod, setSelectedPayMethod] = useState<'wechat' | 'alipay' | 'balance' | 'unionpay'>('wechat');
   const [isPaying, setIsPaying] = useState(false);
   const [showContactCsModal, setShowContactCsModal] = useState(false);
   const [copiedNo, setCopiedNo] = useState(false);
@@ -296,7 +320,7 @@ export function Flow20260806() {
           creator: 'shaoxiaoxiao',
           createTime: '2026-08-07 13:40:21',
           categoryIcon: 'tax',
-          proofImages: [DEFAULT_PROOF_IMAGES.tax, DEFAULT_PROOF_IMAGES.weight]
+          proofImages: [DEFAULT_PROOF_IMAGES.tax]
         },
         ...prev.filter(o => o.id !== 'fee-forced-demo')
       ]);
@@ -344,7 +368,7 @@ export function Flow20260806() {
     if (cat === '海关补交税金') {
       setModalFeeName('海关清关关税差额补缴');
       setModalDetailReason('包裹在海关实际妥投清关环节产生税费查验差额，需补缴税金差额。请在APP内完成支付，支付完成后系统将即时解除出库限制并恢复所有功能。');
-      setModalImageUrls([DEFAULT_PROOF_IMAGES.tax, DEFAULT_PROOF_IMAGES.weight]);
+      setModalImageUrls([DEFAULT_PROOF_IMAGES.tax]);
     } else if (cat === '海运退运费') {
       setModalFeeName('日本邮局海运退运运费');
       setModalDetailReason('因收件方清关逾期或无人签收导致包裹退运，日本邮局产生海运退回运费。支付完成后方可恢复后续包裹处理与重新转寄。');
@@ -388,6 +412,11 @@ export function Flow20260806() {
     e.preventDefault();
     if (!modalFeeName || !modalAmountJpy) {
       alert('请完整填写收费项名称和日元金额！');
+      return;
+    }
+
+    if (modalIsForced === null) {
+      alert('请选择【强制支付】或【非强制支付】（二选一必选）！');
       return;
     }
 
@@ -574,34 +603,12 @@ export function Flow20260806() {
           {currentForcedOrder ? (
             /* ============ CASE 1: FORCED PAYMENT - FULL-SCREEN BILLING & SETTLEMENT PAGE ============ */
             <div className="space-y-3 animate-in fade-in duration-200">
-              {/* Warm & Polite Explanation Banner (NO mention of "垫付") */}
-              <div className="bg-gradient-to-r from-blue-50 via-indigo-50/60 to-blue-50/30 border border-blue-100/90 rounded-2xl p-3.5 flex items-start gap-3 shadow-2xs">
-                <div className="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                  <ShieldAlert className="w-4 h-4" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xs font-bold text-gray-900">待支付费用通知</h2>
-                    <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">
-                      待支付 (强制)
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
-                    尊敬的会员，您有一笔待支付费用，请在APP内完成支付。支付成功后，系统将即刻解除出库限制并恢复所有功能与转运服务。
-                  </p>
-                </div>
-              </div>
-
               {/* Main Bill Card */}
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/90 space-y-3.5">
                 {/* Title & Fee Category Badge (Clearly showing Admin Selected Title and Conditional Countdown) */}
                 <div className="border-b border-gray-50 pb-2.5 space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {/* Category Badge */}
-                      <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-                        {currentForcedOrder.feeCategory}
-                      </span>
                       {/* Conditional Countdown Display: 有倒计时就显示倒计时，没有倒计时就不显示倒计时 */}
                       {(currentForcedOrder.validityHours > 0 || (currentForcedOrder.remainingHours && currentForcedOrder.remainingHours > 0)) && (
                         <span className="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 flex items-center gap-1">
@@ -634,23 +641,8 @@ export function Flow20260806() {
                 </div>
 
                 {/* Clean Key-Value Details */}
-                <div className="space-y-2 text-xs divide-y divide-gray-50">
+                <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between pt-1 text-gray-600">
-                    <span className="text-gray-400">关联合约主单号</span>
-                    <div className="flex items-center gap-1 font-mono text-gray-800 font-medium">
-                      <span>{currentForcedOrder.mainOrderNo}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyOrderNo(currentForcedOrder.mainOrderNo)}
-                        className="text-gray-400 hover:text-blue-600 p-0.5 transition-colors"
-                        title="复制单号"
-                      >
-                        {copiedNo ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1.5 text-gray-600">
                     <span className="text-gray-400">费用产生时间</span>
                     <span className="font-mono text-gray-700">{currentForcedOrder.createTime}</span>
                   </div>
@@ -673,48 +665,47 @@ export function Flow20260806() {
                     <div className="flex items-center justify-between text-[11px] text-gray-500">
                       <span className="flex items-center gap-1 font-semibold text-gray-700">
                         <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
-                        <span>单据凭证 / 官方税单 / 称重记录 ({currentForcedOrder.proofImages.length}张)</span>
+                        <span>单据凭证 / 官方税单</span>
                       </span>
-                      <span className="text-blue-600 text-[10.5px] cursor-pointer hover:underline">点击放大查看</span>
+                      <span
+                        onClick={() => setPreviewImage(currentForcedOrder.proofImages![0])}
+                        className="text-blue-600 text-[10.5px] cursor-pointer hover:underline"
+                      >
+                        点击放大查看
+                      </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {currentForcedOrder.proofImages.map((img, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => setPreviewImage(img)}
-                          className="relative h-20 rounded-xl overflow-hidden border border-gray-200 cursor-pointer group bg-gray-50 shadow-2xs"
-                        >
-                          <img src={img} alt={`Proof-${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-medium gap-1">
-                            <Eye className="w-3.5 h-3.5" /> 点击查看大图
-                          </div>
-                        </div>
-                      ))}
+                    <div
+                      onClick={() => setPreviewImage(currentForcedOrder.proofImages![0])}
+                      className="relative h-28 rounded-xl overflow-hidden border border-gray-200 cursor-pointer group bg-gray-50 shadow-2xs"
+                    >
+                      <img
+                        src={currentForcedOrder.proofImages[0]}
+                        alt="Proof"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-medium gap-1">
+                        <Eye className="w-3.5 h-3.5" /> 点击查看大图
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Payment Channel Selection */}
+                                {/* Payment Channel Selection */}
                 <div className="pt-2 border-t border-gray-100 space-y-2">
                   <span className="text-[11px] font-bold text-gray-700 block">选择支付方式</span>
                   <div className="space-y-1.5">
-                    {/* WeChat */}
+                    {/* WeChat Pay */}
                     <div
                       onClick={() => setSelectedPayMethod('wechat')}
                       className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                         selectedPayMethod === 'wechat'
-                          ? 'border-emerald-500 bg-emerald-50/40 shadow-xs'
+                          ? 'border-blue-500 bg-blue-50/40 shadow-xs'
                           : 'border-gray-200 bg-white hover:bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">
-                          微
-                        </div>
-                        <span className="text-xs font-medium text-gray-800">微信快捷支付</span>
-                      </div>
+                      <span className="text-xs font-medium text-gray-800">微信支付</span>
                       <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        selectedPayMethod === 'wechat' ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300'
+                        selectedPayMethod === 'wechat' ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'
                       }`}>
                         {selectedPayMethod === 'wechat' && <Check className="w-2.5 h-2.5" />}
                       </div>
@@ -729,12 +720,7 @@ export function Flow20260806() {
                           : 'border-gray-200 bg-white hover:bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">
-                          支
-                        </div>
-                        <span className="text-xs font-medium text-gray-800">支付宝结算</span>
-                      </div>
+                      <span className="text-xs font-medium text-gray-800">支付宝支付</span>
                       <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                         selectedPayMethod === 'alipay' ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'
                       }`}>
@@ -742,28 +728,40 @@ export function Flow20260806() {
                       </div>
                     </div>
 
-                    {/* Account Balance */}
+                    {/* Balance Payment */}
                     <div
                       onClick={() => setSelectedPayMethod('balance')}
                       className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                         selectedPayMethod === 'balance'
-                          ? 'border-amber-500 bg-amber-50/40 shadow-xs'
+                          ? 'border-blue-500 bg-blue-50/40 shadow-xs'
                           : 'border-gray-200 bg-white hover:bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center">
-                          <Wallet className="w-3 h-3" />
-                        </div>
-                        <div>
-                          <span className="text-xs font-medium text-gray-800">乐淘账户余额</span>
-                          <span className="text-[10px] text-gray-400 ml-1.5">(可用: ¥8,900 JPY)</span>
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-gray-800">预存金支付</span>
+                        <span className="text-[10px] text-gray-400">(可用: ¥8,900 JPY)</span>
                       </div>
                       <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        selectedPayMethod === 'balance' ? 'border-amber-500 bg-amber-500 text-white' : 'border-gray-300'
+                        selectedPayMethod === 'balance' ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'
                       }`}>
                         {selectedPayMethod === 'balance' && <Check className="w-2.5 h-2.5" />}
+                      </div>
+                    </div>
+
+                    {/* UnionPay */}
+                    <div
+                      onClick={() => setSelectedPayMethod('unionpay')}
+                      className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                        selectedPayMethod === 'unionpay'
+                          ? 'border-blue-500 bg-blue-50/40 shadow-xs'
+                          : 'border-gray-200 bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-xs font-medium text-gray-800">银联支付</span>
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                        selectedPayMethod === 'unionpay' ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'
+                      }`}>
+                        {selectedPayMethod === 'unionpay' && <Check className="w-2.5 h-2.5" />}
                       </div>
                     </div>
                   </div>
@@ -837,64 +835,7 @@ export function Flow20260806() {
                   </div>
                 </div>
 
-                {/* ============ PROMINENT IN-APP STATION MESSAGE NOTIFICATION BANNER (站内信通知) ============ */}
-                {currentNonForcedOrders.length > 0 && !inAppNoticeDismissed && (
-                  <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl p-3 shadow-md space-y-2 animate-in fade-in slide-in-from-top-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-1.5 font-bold text-xs">
-                        <span className="p-1 bg-white/20 rounded-lg">
-                          <Send className="w-3 h-3 text-amber-200 rotate-[-15deg]" />
-                        </span>
-                        <span>站内信通知</span>
-                        <span className="bg-amber-400 text-gray-950 text-[9.5px] font-black px-1.5 py-0.2 rounded-full shadow-2xs">
-                          待处理
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setInAppNoticeDismissed(true)}
-                        className="text-white/70 hover:text-white p-0.5 text-xs"
-                        title="收起通知"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
 
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-xs space-y-1">
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-white">
-                        <span className="truncate max-w-[200px]">{currentNonForcedOrders[0].feeName}</span>
-                        <span className="font-mono text-amber-200 font-bold shrink-0">
-                          ¥{currentNonForcedOrders[0].amountJpy.toLocaleString()} JPY
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-blue-100 leading-snug line-clamp-2">
-                        {currentNonForcedOrders[0].feeDesc}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-0.5">
-                      <span className="text-[10px] text-blue-100">
-                        {currentNonForcedOrders[0].validityHours > 0 ? (
-                          <span className="flex items-center gap-1 text-amber-200 font-medium">
-                            <Clock className="w-3 h-3 animate-pulse" /> {formatCountdown(countdownSeconds)} 有效
-                          </span>
-                        ) : (
-                          '非强制普通费用 · 不影响正常出库'
-                        )}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedStationMessage(currentNonForcedOrders[0])}
-                          className="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 font-bold text-[10.5px] rounded-lg shadow-xs transition-colors flex items-center gap-1"
-                        >
-                          <span>查看站内信详情</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* App Content Switcher based on mobileTab */}
                 {mobileTab === 'home' && (
@@ -1295,10 +1236,6 @@ export function Flow20260806() {
 
               <div className="space-y-1.5 text-gray-600">
                 <div className="flex justify-between py-1 border-b border-gray-50 text-[11px]">
-                  <span className="text-gray-400">关联合约主单号</span>
-                  <span className="font-mono font-medium text-gray-800">{selectedStationMessage.mainOrderNo}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-gray-50 text-[11px]">
                   <span className="text-gray-400">通知发出时间</span>
                   <span className="font-mono text-gray-700">{selectedStationMessage.createTime}</span>
                 </div>
@@ -1508,7 +1445,10 @@ export function Flow20260806() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setShowAddModal(true)}
+                onClick={() => {
+                  setModalIsForced(null);
+                  setShowAddModal(true);
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <Plus className="w-3.5 h-3.5" /> 创建通用支付订单
@@ -1702,7 +1642,7 @@ export function Flow20260806() {
             </div>
 
             {/* Modal Form Body */}
-            <form onSubmit={handleCreateOrder} className="p-6 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
+            <form onSubmit={handleCreateOrder} onPaste={handlePasteImage} className="p-6 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1">
               {/* 会员ID (强制输入) */}
               <div className="flex items-center gap-3">
                 <label className="w-24 text-right text-gray-600 shrink-0 font-medium">
@@ -1771,30 +1711,36 @@ export function Flow20260806() {
                     required
                     min={1}
                   />
-                  <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-1.5 text-gray-600 font-medium text-xs flex items-center">
-                    日元 (参考折合: ￥{(modalAmountJpy * 0.0454).toFixed(2)} RMB)
+                  <span className="bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg px-3 py-1.5 text-gray-700 font-bold text-xs flex items-center shrink-0">
+                    日元
                   </span>
                 </div>
               </div>
 
-              {/* 是否强制支付 (强制支付没有倒计时，不是强制支付就是倒计时) */}
+              {/* 是否强制支付 (必须人工主动二选一选择) */}
               <div className="flex items-start gap-3">
                 <label className="w-24 text-right text-gray-700 font-bold shrink-0 pt-1">
-                  是否强制支付
+                  <span className="text-red-500 mr-0.5">*</span> 是否强制支付
                 </label>
                 <div className="flex-1 space-y-2">
+                  {modalIsForced === null && (
+                    <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 font-semibold animate-pulse">
+                      ⚠️ 请人工主动选择拦截模式（二选一必选）
+                    </div>
+                  )}
+
                   <label className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
-                    modalIsForced ? 'bg-red-50/80 border-red-300' : 'bg-white border-gray-200 hover:bg-gray-50'
+                    modalIsForced === true ? 'bg-red-50/90 border-red-400 ring-2 ring-red-200' : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}>
                     <input
                       type="radio"
                       name="isForced_modal"
-                      checked={modalIsForced}
+                      checked={modalIsForced === true}
                       onChange={() => {
                         setModalIsForced(true);
                         setModalHasCountdown(false);
                       }}
-                      className="mt-0.5 text-red-600 focus:ring-0"
+                      className="mt-0.5 text-red-600 focus:ring-0 cursor-pointer"
                     />
                     <div>
                       <div className="font-bold text-red-700 text-xs flex items-center gap-1">
@@ -1807,17 +1753,17 @@ export function Flow20260806() {
                   </label>
 
                   <label className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
-                    !modalIsForced ? 'bg-blue-50/80 border-blue-300' : 'bg-white border-gray-200 hover:bg-gray-50'
+                    modalIsForced === false ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-200' : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}>
                     <input
                       type="radio"
                       name="isForced_modal"
-                      checked={!modalIsForced}
+                      checked={modalIsForced === false}
                       onChange={() => {
                         setModalIsForced(false);
                         setModalHasCountdown(true);
                       }}
-                      className="mt-0.5 text-blue-600 focus:ring-0"
+                      className="mt-0.5 text-blue-600 focus:ring-0 cursor-pointer"
                     />
                     <div>
                       <div className="font-bold text-blue-700 text-xs flex items-center gap-1">
@@ -1826,7 +1772,7 @@ export function Flow20260806() {
                       <p className="text-[11px] text-gray-600 mt-0.5">
                         非强制支付模式下：不锁定APP其他常规功能，<strong>带有时效倒计时</strong>（超时自动作废）。
                       </p>
-                      {!modalIsForced && (
+                      {modalIsForced === false && (
                         <div className="mt-2 flex items-center gap-2 pt-1.5 border-t border-blue-200/60">
                           <span className="text-[11px] text-gray-700 font-medium">倒计时时长:</span>
                           <select
@@ -1862,29 +1808,33 @@ export function Flow20260806() {
                 </div>
               </div>
 
-              {/* 图片上传栏 */}
+              {/* 图片上传栏 (仅限1张，支持点击选择文件或直接 Ctrl+V / Cmd+V 剪贴板粘贴) */}
               <div className="flex items-start gap-3">
                 <label className="w-24 text-right text-gray-600 shrink-0 pt-1 font-medium">
                   图片上传栏
                 </label>
                 <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    {modalImageUrls.map((url, idx) => (
-                      <div key={idx} className="relative w-14 h-14 rounded-lg border border-gray-200 overflow-hidden group">
-                        <img src={url} alt="Proof" className="w-full h-full object-cover" />
+                  <div className="flex items-center gap-3">
+                    {modalImageUrls.length > 0 && (
+                      <div className="relative w-16 h-16 rounded-xl border border-gray-200 overflow-hidden group shadow-2xs shrink-0">
+                        <img src={modalImageUrls[0]} alt="Proof" className="w-full h-full object-cover" />
                         <button
                           type="button"
-                          onClick={() => setModalImageUrls(prev => prev.filter((_, i) => i !== idx))}
-                          className="absolute top-0.5 right-0.5 bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => setModalImageUrls([])}
+                          className="absolute top-0.5 right-0.5 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-xs transition-colors"
+                          title="删除图片"
                         >
                           <X className="w-2.5 h-2.5" />
                         </button>
                       </div>
-                    ))}
+                    )}
 
-                    <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:text-blue-600 transition-colors bg-gray-50">
-                      <ImageIcon className="w-5 h-5" />
-                      <span className="text-[9px] mt-0.5">上传</span>
+                    <label className="h-16 flex-1 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-500 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:text-blue-600 transition-colors bg-gray-50/80 hover:bg-blue-50/20 p-2 text-center">
+                      <ImageIcon className="w-4 h-4 text-gray-400" />
+                      <span className="text-[11px] font-bold mt-0.5 text-gray-700">
+                        {modalImageUrls.length > 0 ? '点击更换凭证 (或直接按 Ctrl+V 粘贴覆盖)' : '点击上传 或 复制图片直接 Ctrl+V / Cmd+V 粘贴'}
+                      </span>
+                      <span className="text-[9.5px] text-gray-400">仅限 1 张单据凭证</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -1895,7 +1845,8 @@ export function Flow20260806() {
                             const reader = new FileReader();
                             reader.onload = event => {
                               if (event.target?.result) {
-                                setModalImageUrls(prev => [...prev, event.target!.result as string]);
+                                setModalImageUrls([event.target!.result as string]);
+                                showToast('已成功导入图片');
                               }
                             };
                             reader.readAsDataURL(file);
@@ -1904,8 +1855,8 @@ export function Flow20260806() {
                       />
                     </label>
                   </div>
-                  <p className="text-[10.5px] text-gray-400">
-                    支持上传海关税单、称重凭证、退运照片等（可上传多张）。
+                  <p className="text-[10.5px] text-gray-400 leading-snug">
+                    支持海关税单、称重凭证、退运照片等（仅支持1张）。复制图片后可在此处直接按 <strong>Ctrl+V / Cmd+V</strong> 快捷粘贴。
                   </p>
                 </div>
               </div>
