@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Info,
   AlertTriangle,
+  AlertCircle,
   HelpCircle,
   Timer,
   ShieldAlert,
@@ -52,7 +53,7 @@ import {
   Settings
 } from 'lucide-react';
 
-export type FeeCategory = '海关补交税金' | '海运退运费' | '航空退运费' | '运费差额补缴' | '违规及对应手续费' | '超期滞仓费' | '增值服务费';
+export type FeeCategory = '退运邮费' | '入库到付' | '包裹税金' | '海关补交税金' | '海运退运费' | '航空退运费' | '运费差额补缴' | '违规及对应手续费' | '超期滞仓费' | '增值服务费';
 
 export interface AdminFeeOrder {
   id: string;
@@ -103,6 +104,25 @@ const INITIAL_ORDERS: AdminFeeOrder[] = [
     createTime: '2026-08-07 13:40:21',
     categoryIcon: 'tax',
     proofImages: [DEFAULT_PROOF_IMAGES.tax]
+  },
+  {
+    id: 'fee-101-cod2',
+    feeName: '入库到付快递包裹代垫费',
+    mainOrderNo: 'OR20260807182200192831',
+    subOrderNo: 'OR20260807182200192831001',
+    memberId: '5086662130',
+    feeCategory: '入库到付',
+    feeDesc: '包裹到仓由仓库代垫顺丰到付运费 ¥880 日元（一单一单独立处理，不与其他到付单合并）。',
+    amountJpy: 880,
+    amountRmb: 39.95,
+    status: '未支付',
+    isForced: true,
+    validityHours: 0,
+    validityText: '无倒计时 (常规必付)',
+    creator: 'shaoxiaoxiao',
+    createTime: '2026-08-07 15:10:00',
+    categoryIcon: 'tax',
+    proofImages: [DEFAULT_PROOF_IMAGES.package]
   },
   {
     id: 'fee-102',
@@ -193,6 +213,7 @@ export function Flow20260806() {
   // Filters State for Admin Table
   const [searchFeeName, setSearchFeeName] = useState('');
   const [searchMainOrder, setSearchMainOrder] = useState('');
+  const [searchDetailQuery, setSearchDetailQuery] = useState(''); // 详细输入栏 / 唯一值检索
   const [searchSubOrder, setSearchSubOrder] = useState('');
   const [searchMemberId, setSearchMemberId] = useState('');
   const [searchFeeCategory, setSearchFeeCategory] = useState('');
@@ -277,10 +298,12 @@ export function Flow20260806() {
     }
   ]);
 
-  // Find active forced unpaid order for current App member
-  const currentForcedOrder = orders.find(
+  // Find ALL active forced unpaid orders for current App member
+  const forcedUnpaidOrders = orders.filter(
     o => o.memberId === currentAppMemberId && o.isForced && o.status === '未支付'
   );
+  // Current active forced order (first unpaid forced order)
+  const currentForcedOrder = forcedUnpaidOrders[0];
 
   // Non-forced unpaid orders for current member
   const currentNonForcedOrders = orders.filter(
@@ -362,21 +385,39 @@ export function Flow20260806() {
     }
   };
 
-  // Pre-fill modal reasons based on category
+  // Pre-fill modal reasons based on category and default to forced payment for top 3 presets
   const handleCategoryPresetChange = (cat: FeeCategory) => {
     setModalFeeCategory(cat);
-    if (cat === '海关补交税金') {
-      setModalFeeName('海关清关关税差额补缴');
+    if (cat === '退运邮费') {
+      setModalFeeName('退运邮费');
+      setModalDetailReason('包裹因清关逾期或无人签收导致退运，仓库产生退回邮费运费。请在APP内完成支付，支付完成后系统将即时解除出库限制并恢复所有功能。');
+      setModalImageUrls([DEFAULT_PROOF_IMAGES.sea]);
+      setModalIsForced(true); // 默认选中【强制支付】
+      setModalHasCountdown(false);
+    } else if (cat === '入库到付') {
+      setModalFeeName('入库到付');
+      setModalDetailReason('包裹入库时由仓库代垫的国内/日本本土快递到付服务费用。请在APP内完成支付，支付完成后系统将即时解除出库限制并恢复所有功能。');
+      setModalImageUrls([DEFAULT_PROOF_IMAGES.package]);
+      setModalIsForced(true); // 默认选中【强制支付】
+      setModalHasCountdown(false);
+    } else if (cat === '包裹税金' || cat === '海关补交税金') {
+      setModalFeeName('包裹税金');
       setModalDetailReason('包裹在海关实际妥投清关环节产生税费查验差额，需补缴税金差额。请在APP内完成支付，支付完成后系统将即时解除出库限制并恢复所有功能。');
       setModalImageUrls([DEFAULT_PROOF_IMAGES.tax]);
+      setModalIsForced(true); // 默认选中【强制支付】
+      setModalHasCountdown(false);
     } else if (cat === '海运退运费') {
       setModalFeeName('日本邮局海运退运运费');
       setModalDetailReason('因收件方清关逾期或无人签收导致包裹退运，日本邮局产生海运退回运费。支付完成后方可恢复后续包裹处理与重新转寄。');
       setModalImageUrls([DEFAULT_PROOF_IMAGES.sea]);
+      setModalIsForced(true);
+      setModalHasCountdown(false);
     } else if (cat === '航空退运费') {
       setModalFeeName('航空干线退运运费');
       setModalDetailReason('航空退运产生的返程机位差价与运输费用。需支付该款项以继续安排后续转运操作。');
       setModalImageUrls([DEFAULT_PROOF_IMAGES.sea]);
+      setModalIsForced(true);
+      setModalHasCountdown(false);
     } else if (cat === '运费差额补缴') {
       setModalFeeName('包裹实重与体积重差额补缴');
       setModalDetailReason('仓库打包后实秤重量与入库预估产生差额，需补缴运费差额以完成最终放行与出库。');
@@ -404,6 +445,18 @@ export function Flow20260806() {
       const isForcedBool = searchIsForced === 'true';
       if (item.isForced !== isForcedBool) return false;
     }
+    if (searchDetailQuery) {
+      const q = searchDetailQuery.trim().toLowerCase();
+      const matchDetail =
+        item.mainOrderNo.toLowerCase().includes(q) ||
+        (item.subOrderNo && item.subOrderNo.toLowerCase().includes(q)) ||
+        (item.payNo && item.payNo.toLowerCase().includes(q)) ||
+        item.id.toLowerCase().includes(q) ||
+        item.memberId.toLowerCase().includes(q) ||
+        item.feeName.toLowerCase().includes(q) ||
+        item.feeDesc.toLowerCase().includes(q);
+      if (!matchDetail) return false;
+    }
     return true;
   });
 
@@ -420,10 +473,9 @@ export function Flow20260806() {
       return;
     }
 
-    const validityHoursVal = modalHasCountdown ? modalValidityHours : 0;
-    const validityText = modalHasCountdown
-      ? `${modalValidityHours}小时倒计时`
-      : '无倒计时 (常规必付)';
+    // 非强制支付固定默认24小时倒计时
+    const validityHoursVal = modalIsForced ? 0 : 24;
+    const validityText = modalIsForced ? '无倒计时 (常规必付)' : '24小时倒计时';
 
     const newOrder: AdminFeeOrder = {
       id: `fee-${Date.now()}`,
@@ -603,6 +655,19 @@ export function Flow20260806() {
           {currentForcedOrder ? (
             /* ============ CASE 1: FORCED PAYMENT - FULL-SCREEN BILLING & SETTLEMENT PAGE ============ */
             <div className="space-y-3 animate-in fade-in duration-200">
+              {/* If multiple forced unpaid orders exist, display an alert indicating single-order independent processing */}
+              {forcedUnpaidOrders.length > 1 && (
+                <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-2.5 text-[11px] text-amber-900 font-bold flex items-center justify-between gap-2 shadow-2xs">
+                  <div className="flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>含有 {forcedUnpaidOrders.length} 笔待付账单（一单一单独立展示，不合并）</span>
+                  </div>
+                  <span className="bg-amber-200/90 text-amber-950 px-2 py-0.5 rounded-full text-[10px] shrink-0 font-extrabold border border-amber-300">
+                    第 1/{forcedUnpaidOrders.length} 笔
+                  </span>
+                </div>
+              )}
+
               {/* Main Bill Card */}
               <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100/90 space-y-3.5">
                 {/* Title & Fee Category Badge (Clearly showing Admin Selected Title and Conditional Countdown) */}
@@ -1342,7 +1407,20 @@ export function Flow20260806() {
 
         {/* Filter / Search Bar (Rich Search Controls) */}
         <div className="p-4 bg-white border-b border-gray-200 space-y-3 shrink-0">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-2.5">
+            <div className="col-span-2 sm:col-span-2 md:col-span-2">
+              <label className="text-[11px] font-bold text-blue-700 block mb-1 flex items-center gap-1">
+                <Search className="w-3 h-3 text-blue-600" /> 详细输入栏 (唯一值搜索)
+              </label>
+              <input
+                type="text"
+                placeholder="搜索主单号/分单号/支付单号/会员ID..."
+                value={searchDetailQuery}
+                onChange={e => setSearchDetailQuery(e.target.value)}
+                className="w-full border border-blue-300 bg-blue-50/30 rounded-lg px-2.5 py-1.5 text-xs text-blue-950 font-mono font-medium focus:outline-none focus:border-blue-600 focus:bg-white transition-all shadow-2xs"
+              />
+            </div>
+
             <div>
               <label className="text-[11px] text-gray-500 block mb-1">收费项名称</label>
               <input
@@ -1358,7 +1436,7 @@ export function Flow20260806() {
               <label className="text-[11px] text-gray-500 block mb-1">主订单号(LO/OR)</label>
               <input
                 type="text"
-                placeholder="请输入主订单编号"
+                placeholder="主订单编号"
                 value={searchMainOrder}
                 onChange={e => setSearchMainOrder(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500"
@@ -1381,10 +1459,13 @@ export function Flow20260806() {
               <select
                 value={searchFeeCategory}
                 onChange={e => setSearchFeeCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:border-blue-500 font-medium"
               >
                 <option value="">全部费用类别</option>
-                <option value="海关补交税金">海关补交税金</option>
+                <option value="退运邮费">【退运邮费】(高频硬拦截)</option>
+                <option value="入库到付">【入库到付】(高频硬拦截)</option>
+                <option value="包裹税金">【包裹税金】(高频硬拦截)</option>
+                <option value="海关补交税金">海关关税/清关关税补缴</option>
                 <option value="海运退运费">海运退运费</option>
                 <option value="航空退运费">航空退运费</option>
                 <option value="运费差额补缴">运费差额补缴</option>
@@ -1421,12 +1502,13 @@ export function Flow20260806() {
               </select>
             </div>
 
-            <div className="flex items-end gap-1.5">
+            <div className="flex items-end gap-1.5 col-span-2 sm:col-span-1">
               <button
                 type="button"
                 onClick={() => {
                   setSearchFeeName('');
                   setSearchMainOrder('');
+                  setSearchDetailQuery('');
                   setSearchSubOrder('');
                   setSearchMemberId('');
                   setSearchFeeCategory('');
@@ -1674,24 +1756,63 @@ export function Flow20260806() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs text-gray-800 font-medium focus:outline-none focus:border-blue-500"
                     required
                   />
-                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                    <span>快捷预设:</span>
-                    <select
-                      onChange={e => {
-                        if (e.target.value) handleCategoryPresetChange(e.target.value as FeeCategory);
-                      }}
-                      defaultValue=""
-                      className="border border-gray-200 rounded px-2 py-0.5 text-[11px] bg-white text-gray-700"
-                    >
-                      <option value="" disabled>选择常用预设标题...</option>
-                      <option value="海关补交税金">海关补交税金 (清关税费差额补缴)</option>
-                      <option value="海运退运费">海运退运费 (日本邮局退运运费)</option>
-                      <option value="航空退运费">航空退运费 (航空退回运费)</option>
-                      <option value="运费差额补缴">运费差额补缴 (实重与体积重超差)</option>
-                      <option value="违规及对应手续费">违规及对应手续费 (违禁品处置)</option>
-                      <option value="超期滞仓费">超期滞仓费 (超期仓储收费)</option>
-                      <option value="增值服务费">增值服务费 (拍照/加固等)</option>
-                    </select>
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <span className="text-gray-500 font-medium">高频预设 (默认硬拦截):</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryPresetChange('退运邮费')}
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                          modalFeeCategory === '退运邮费'
+                            ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                        }`}
+                      >
+                        <span>【退运邮费】</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryPresetChange('入库到付')}
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                          modalFeeCategory === '入库到付'
+                            ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                        }`}
+                      >
+                        <span>【入库到付】</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryPresetChange('包裹税金')}
+                        className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                          modalFeeCategory === '包裹税金'
+                            ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                        }`}
+                      >
+                        <span>【包裹税金】</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                      <span>更多预设:</span>
+                      <select
+                        onChange={e => {
+                          if (e.target.value) handleCategoryPresetChange(e.target.value as FeeCategory);
+                        }}
+                        value={modalFeeCategory}
+                        className="border border-gray-200 rounded px-2 py-0.5 text-[11px] bg-white text-gray-700 font-medium"
+                      >
+                        <option value="" disabled>选择预设标题...</option>
+                        <option value="退运邮费">【退运邮费】(退回包裹运费 · 默认强制支付)</option>
+                        <option value="入库到付">【入库到付】(仓库到付包裹垫付款 · 默认强制支付)</option>
+                        <option value="包裹税金">【包裹税金】(海关清关查验税费 · 默认强制支付)</option>
+                        <option value="运费差额补缴">运费差额补缴 (实重与体积重超差)</option>
+                        <option value="违规及对应手续费">违规及对应手续费 (违禁品处置)</option>
+                        <option value="超期滞仓费">超期滞仓费 (超期仓储收费)</option>
+                        <option value="增值服务费">增值服务费 (拍照/加固等)</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1774,17 +1895,10 @@ export function Flow20260806() {
                       </p>
                       {modalIsForced === false && (
                         <div className="mt-2 flex items-center gap-2 pt-1.5 border-t border-blue-200/60">
-                          <span className="text-[11px] text-gray-700 font-medium">倒计时时长:</span>
-                          <select
-                            value={modalValidityHours}
-                            onChange={e => setModalValidityHours(Number(e.target.value))}
-                            className="border border-blue-300 rounded px-2 py-1 text-xs bg-white text-blue-900 font-bold"
-                          >
-                            <option value={12}>12 小时</option>
-                            <option value={24}>24 小时 (推荐)</option>
-                            <option value={48}>48 小时</option>
-                            <option value={72}>72 小时</option>
-                          </select>
+                          <span className="text-[11px] text-blue-900 font-bold bg-blue-100/80 px-2.5 py-1 rounded-md border border-blue-200/80 inline-flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-blue-600" />
+                            倒计时时长：默认 24 小时倒计时 (系统自动设定，无需手动选择)
+                          </span>
                         </div>
                       )}
                     </div>
