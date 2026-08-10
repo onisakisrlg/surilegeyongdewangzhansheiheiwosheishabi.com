@@ -151,6 +151,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSpecsCollapsed, setIsSpecsCollapsed] = useState(false);
+  const [showPrdModal, setShowPrdModal] = useState(false);
+  const [viewTab, setViewTab] = useState<'prototype' | 'prd' | 'split'>('split');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // 海运/空运退运方案互动状态
@@ -555,71 +557,58 @@ export default function App() {
             <motion.div
               initial={{ width: 0, opacity: 0, x: -20 }}
               animate={{ 
-                width: isSpecsCollapsed ? 48 : 420, 
+                width: isSpecsCollapsed ? 48 : 380, 
                 opacity: 1, 
                 x: 0 
               }}
               exit={{ width: 0, opacity: 0, x: -20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="border-r border-[#e9ecef] flex flex-col h-full bg-[#fdfdfd] overflow-hidden relative group/spec"
+              className="border-r border-[#e9ecef] flex flex-col h-full bg-[#fdfdfd] overflow-hidden relative group/spec shrink-0 min-w-0 z-20"
             >
               {/* Toggle Button for Specs */}
               <button 
                 onClick={() => setIsSpecsCollapsed(!isSpecsCollapsed)}
-                className="absolute right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm z-40 hover:bg-black hover:text-white transition-all transition-colors"
+                className="absolute -right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-xs z-40 hover:bg-black hover:text-white transition-all transition-colors cursor-pointer"
+                title={isSpecsCollapsed ? "展开需求文档" : "收起需求文档"}
               >
-                {isSpecsCollapsed ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                {isSpecsCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
               </button>
 
               {!isSpecsCollapsed ? (
-                <div className="p-8 h-full overflow-y-auto custom-scrollbar">
-                  <div className="mb-6">
+                <div className="p-6 h-full overflow-y-auto custom-scrollbar flex flex-col">
+                  <div className="mb-6 pb-4 border-b border-gray-100">
                     <div className="flex items-center justify-between gap-2 text-indigo-600 mb-2 font-medium text-xs tracking-wider uppercase">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4" />
-                        <span className="font-bold text-indigo-700">需求文档</span>
+                        <BookOpen className="w-4 h-4 text-indigo-600" />
+                        <span className="font-bold text-indigo-700">需求文档 (PRD)</span>
                       </div>
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (!selectedProject || isExportingPdf) return;
-                          setIsExportingPdf(true);
-                          try {
-                            await exportProjectPRDToPDF(selectedProject);
-                          } catch (err) {
-                            console.error('PDF export error:', err);
-                          } finally {
-                            setIsExportingPdf(false);
-                          }
-                        }}
-                        disabled={isExportingPdf}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
-                        title="下载当前项目的PRD需求文档 PDF"
+                        onClick={() => setShowPrdModal(true)}
+                        className="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold underline flex items-center gap-1 cursor-pointer"
                       >
-                        {isExportingPdf ? (
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <FileDown className="w-3.5 h-3.5" />
-                        )}
-                        <span>{isExportingPdf ? '导出中...' : '下载需求文档 (PDF)'}</span>
+                        <Eye className="w-3 h-3" />
+                        全屏阅读
                       </button>
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight mb-2 text-gray-900">{selectedProject.name}</h1>
-                    <p className="text-gray-500 leading-relaxed text-xs">
+                    <h1 className="text-xl font-bold tracking-tight mb-2 text-gray-900">{selectedProject.name}</h1>
+                    <p className="text-gray-500 leading-relaxed text-xs bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100/60">
                       {selectedProject.description}
                     </p>
                   </div>
 
-                  <div className="space-y-10">
+                  <div className="space-y-6 flex-1">
                     {selectedProject.specs.map((spec, i) => (
-                      <section key={i} className="group">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="h-6 w-1 bg-black rounded-full transition-all group-hover:h-8" />
-                          <h3 className="font-bold text-sm uppercase tracking-widest text-[#1a1a1b]">
+                      <section key={i} className="group bg-white p-3.5 rounded-xl border border-gray-100 shadow-2xs hover:border-indigo-200 transition-colors">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {i + 1}
+                          </span>
+                          <h3 className="font-bold text-xs text-gray-900">
                             {spec.title}
                           </h3>
                         </div>
-                        <div className="pl-4 prose prose-sm text-gray-600 whitespace-pre-wrap leading-relaxed border-l border-gray-100 text-xs">
+                        <div className="pl-7 text-gray-600 whitespace-pre-wrap leading-relaxed text-[11.5px]">
                           {spec.content}
                         </div>
                       </section>
@@ -627,24 +616,31 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center py-10 gap-8">
-                  <FileText className="w-5 h-5 text-gray-300" />
-                  <div className="flex flex-col gap-4 items-center">
-                    <div className="w-6 h-px bg-gray-200" />
-                    <BookOpen className="w-4 h-4 text-gray-300" />
-                    <div className="w-6 h-px bg-gray-200" />
+                <button
+                  type="button"
+                  onClick={() => setIsSpecsCollapsed(false)}
+                  className="w-full h-full flex flex-col items-center pt-20 pb-8 px-1 gap-3 hover:bg-indigo-50/60 transition-colors cursor-pointer group"
+                  title="点击展开需求文档"
+                >
+                  <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-2xs">
+                    <BookOpen className="w-4 h-4" />
                   </div>
-                </div>
+                  <span className="[writing-mode:vertical-lr] text-xs font-bold text-gray-700 tracking-wider group-hover:text-indigo-600 transition-colors my-2">
+                    需求文档
+                  </span>
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all mt-auto" />
+                </button>
               )}
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Right Preview Stage */}
-        <section className={`flex-1 flex flex-col bg-[#f8f9fa] shadow-inner transition-all relative`}>
+        <section className={`flex-1 flex flex-col bg-[#f8f9fa] shadow-inner transition-all relative min-w-0`}>
           {/* Stage Controls */}
-          <header className="h-16 flex-shrink-0 bg-white/80 backdrop-blur border-b border-[#e9ecef] px-6 flex items-center justify-between z-10">
-            <div className="flex items-center gap-6">
+          <header className="h-16 flex-shrink-0 bg-white/80 backdrop-blur border-b border-[#e9ecef] px-6 flex items-center justify-between z-10 gap-4">
+            <div className="flex items-center gap-4">
+              {/* Device Mode Switcher */}
               <div className="flex bg-gray-100 p-1 rounded-lg">
                 {[
                   { id: 'desktop', icon: Monitor },
@@ -655,7 +651,7 @@ export default function App() {
                     key={item.id}
                     onClick={() => setViewMode(item.id as any)}
                     className={`p-1.5 rounded-md transition-all ${
-                      viewMode === item.id ? 'bg-white shadow-sm text-black' : 'text-gray-400 hover:text-gray-600'
+                      viewMode === item.id ? 'bg-white shadow-xs text-black font-bold' : 'text-gray-400 hover:text-gray-600'
                     }`}
                   >
                     <item.icon className="w-4 h-4" />
@@ -665,14 +661,48 @@ export default function App() {
               
               <div className="h-4 w-px bg-gray-200" />
               
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span className="font-medium text-black">
-                  完整预览
-                </span>
+              {/* Document / Prototype View Mode Toggle */}
+              <div className="flex bg-gray-100 p-1 rounded-xl gap-1 border border-gray-200/80">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewTab('split');
+                    setIsSpecsCollapsed(false);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    !isSpecsCollapsed ? 'bg-white text-indigo-700 shadow-2xs' : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>需求文档 + 原型</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewTab('prototype');
+                    setIsSpecsCollapsed(true);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    isSpecsCollapsed ? 'bg-white text-black shadow-2xs' : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>仅看原型</span>
+                </button>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPrdModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 rounded-full text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-2xs"
+                title="全屏阅读需求文档"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>全屏看需求文档</span>
+              </button>
+
               {selectedProject?.redmineUrl ? (
                 <a 
                   href={selectedProject.redmineUrl}
@@ -2722,6 +2752,80 @@ export default function App() {
                 className="w-full py-4 bg-black text-white rounded-2xl font-bold text-sm tracking-wide shadow-lg active:scale-[0.98] transition-all"
               >
                 确认并返回
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PRD Fullscreen Reading Modal */}
+      {showPrdModal && selectedProject && (
+        <div 
+          className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200"
+          onClick={() => setShowPrdModal(false)}
+        >
+          <div 
+            className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/80">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
+                    乐淘 RAKUTAO · 产品需求文档 (PRD)
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900">{selectedProject.name}</h2>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPrdModal(false)}
+                  className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-200/60 transition-colors cursor-pointer"
+                  title="关闭"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-6 bg-white">
+              <div className="p-4 bg-indigo-50/60 border border-indigo-100 rounded-xl text-xs text-gray-700 leading-relaxed">
+                <strong className="text-indigo-900">需求概述：</strong>{selectedProject.description}
+              </div>
+
+              <div className="space-y-6">
+                {selectedProject.specs.map((spec, index) => (
+                  <div key={index} className="p-5 rounded-xl border border-gray-200/80 bg-gray-50/30 hover:border-indigo-200 transition-colors">
+                    <div className="flex items-center gap-2.5 mb-3 border-b border-gray-200/60 pb-2.5">
+                      <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-2xs">
+                        {index + 1}
+                      </span>
+                      <h3 className="font-bold text-sm text-gray-900">{spec.title}</h3>
+                    </div>
+                    <div className="pl-8 text-xs leading-relaxed text-gray-700 whitespace-pre-wrap">
+                      {spec.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs text-gray-500">
+              <span>如对需求细节有疑问，请联系产品经理及研发团队</span>
+              <button
+                type="button"
+                onClick={() => setShowPrdModal(false)}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-xl transition-all cursor-pointer shadow-xs"
+              >
+                已了解，关闭文档
               </button>
             </div>
           </div>
