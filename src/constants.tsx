@@ -7,7 +7,7 @@ export const MOCK_PROJECTS: PrototypeProject[] = [
     category: "账单与支付",
     description: "针对【退运邮费】、【入库到付】、【包裹税金】等高频仓储关税场景，设计的通用支付创建与APP端强制支付硬拦截管控全流程需求规范。",
     previewUrl: null,
-    redmineUrl: "https://redmine.rakutao.vip/issues/15208",
+    redmineUrl: "https://redmine.rakutao.vip/issues/16332",
     status: "in-progress",
     specs: [
       {
