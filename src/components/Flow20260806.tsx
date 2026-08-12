@@ -265,7 +265,7 @@ export function Flow20260806() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // App Client State
-  const [selectedPayMethod, setSelectedPayMethod] = useState<'wechat' | 'alipay' | 'balance' | 'unionpay'>('wechat');
+  const [selectedPayMethod, setSelectedPayMethod] = useState<'wechat' | 'alipay' | 'balance' | 'unionpay' | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [showContactCsModal, setShowContactCsModal] = useState(false);
   const [copiedNo, setCopiedNo] = useState(false);
@@ -513,9 +513,14 @@ export function Flow20260806() {
   // Handle App Pay
   const handleAppPay = () => {
     if (!currentForcedOrder) return;
+    if (!selectedPayMethod) {
+      showToast('⚠️ 请先选择支付方式后再进行结算！');
+      return;
+    }
     setIsPaying(true);
     setTimeout(() => {
       setIsPaying(false);
+      setSelectedPayMethod(null);
       setOrders(prev =>
         prev.map(o =>
           o.id === currentForcedOrder.id
